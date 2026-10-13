@@ -4,7 +4,8 @@
   "dependencies": {
     "@pi-display/ansi-renderer": "workspace:*",
     "@pi-display/screen-api": "workspace:*",
-    "@pi-display/clock": "workspace:*"
+    "@pi-display/clock": "workspace:*",
+    "@pi-display/usage": "workspace:*"
   },
   "scripts": {
     "dev": "cargo run -p player -- --preview --display ../../profiles/displays/example-800x480.toml --playlist ../../config/playlist.toml",

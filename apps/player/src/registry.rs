@@ -2,6 +2,7 @@ use ansi_renderer::{CELL_HEIGHT, CELL_WIDTH, GlyphLibrary, GlyphSet, Terminal};
 use anyhow::{Context, Result, bail};
 use screen_api::Screen;
 use screen_clock::{ClockScreen, ClockSettings};
+use screen_usage::{UsageScreen, UsageSettings};
 
 use crate::{
     PlayerWindow,
@@ -46,6 +47,10 @@ impl AnsiSurface {
 }
 
 pub enum ScreenInstance {
+    Usage {
+        screen: UsageScreen,
+        ansi: Option<AnsiSurface>,
+    },
     Clock {
         screen: ClockScreen,
         ansi: Option<AnsiSurface>,
@@ -71,13 +76,30 @@ impl ScreenInstance {
                     ansi,
                 })
             }
-            module => bail!("unknown screen module '{module}'; registered modules: clock"),
+            "usage" => {
+                let settings: UsageSettings = entry
+                    .settings
+                    .clone()
+                    .try_into()
+                    .context("invalid usage settings")?;
+                let ansi = if entry.renderer == Renderer::Ansi {
+                    Some(AnsiSurface::new(display, entry.glyphs)?)
+                } else {
+                    None
+                };
+                Ok(Self::Usage {
+                    screen: UsageScreen::new(settings)?,
+                    ansi,
+                })
+            }
+            module => bail!("unknown screen module '{module}'; registered modules: clock, usage"),
         }
     }
 
     pub fn render(&mut self, window: &PlayerWindow) {
         match self {
             Self::Clock { screen, ansi } => {
+                window.set_usage_mode(false);
                 window.set_ansi_mode(ansi.is_some());
                 if let Some(surface) = ansi {
                     let frame = screen.ansi_frame(
@@ -90,6 +112,21 @@ impl ScreenInstance {
                     window.set_clock_time(screen.time().into());
                 }
             }
+            Self::Usage { screen, ansi } => {
+                window.set_usage_mode(true);
+                window.set_ansi_mode(ansi.is_some());
+                if let Some(surface) = ansi {
+                    let frame =
+                        screen.ansi_frame(surface.terminal.columns(), surface.terminal.rows());
+                    window.set_ansi_frame(surface.render(&frame));
+                } else {
+                    let usage = screen.usage();
+                    window
+                        .set_five_hour(usage.and_then(|u| u.five_hour).map_or(-1.0, |p| p as f32));
+                    window.set_weekly(usage.and_then(|u| u.weekly).map_or(-1.0, |p| p as f32));
+                    window.set_usage_message(screen.message().into());
+                }
+            }
         }
     }
 }
@@ -98,18 +135,21 @@ impl Screen for ScreenInstance {
     fn activate(&mut self) {
         match self {
             Self::Clock { screen, .. } => screen.activate(),
+            Self::Usage { screen, .. } => screen.activate(),
         }
     }
 
     fn tick(&mut self) {
         match self {
             Self::Clock { screen, .. } => screen.tick(),
+            Self::Usage { screen, .. } => screen.tick(),
         }
     }
 
     fn deactivate(&mut self) {
         match self {
             Self::Clock { screen, .. } => screen.deactivate(),
+            Self::Usage { screen, .. } => screen.deactivate(),
         }
     }
 }

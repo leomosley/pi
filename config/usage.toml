@@ -1,0 +1,7 @@
+[[screens]]
+module = "usage"
+duration_seconds = 30
+renderer = "ansi"
+
+[screens.settings]
+refresh_seconds = 60

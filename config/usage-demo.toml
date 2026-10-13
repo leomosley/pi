@@ -1,0 +1,8 @@
+# Explicit offline sample data, never your actual quota.
+[[screens]]
+module = "usage"
+duration_seconds = 30
+renderer = "ansi"
+
+[screens.settings]
+demo = true

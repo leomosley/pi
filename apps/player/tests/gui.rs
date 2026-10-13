@@ -42,6 +42,58 @@ fn portrait_preview_preserves_target_dimensions() {
 
 #[test]
 #[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn usage_screen_renders_two_ascii_percentage_bars() {
+    let (info, pixels) = capture(
+        "usage",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--playlist",
+            "config/usage-demo.toml",
+        ],
+    );
+    assert_eq!((info.width, info.height), (480, 368));
+    let mut terminal = ansi_renderer::Terminal::new(60, 40).unwrap();
+    let screen = screen_usage::UsageScreen::new(screen_usage::UsageSettings {
+        demo: true,
+        ..Default::default()
+    })
+    .unwrap();
+    terminal.feed(screen.ansi_frame(60, 40).as_bytes());
+    let expected = terminal.rasterize();
+    let mismatch = pixels[..480 * 320 * 4]
+        .chunks_exact(4)
+        .zip(expected.pixels.chunks_exact(4))
+        .enumerate()
+        .find(|(_, (actual, expected))| actual != expected);
+    assert!(mismatch.is_none(), "first mismatched pixel: {mismatch:?}");
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn usage_screen_also_supports_native_bars() {
+    let (_, pixels) = capture(
+        "usage-native",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--playlist",
+            "config/usage-demo.toml",
+            "--renderer",
+            "native",
+        ],
+    );
+    assert!(
+        pixels[..480 * 320 * 4]
+            .chunks_exact(4)
+            .filter(|p| p[..3] == [255; 3])
+            .count()
+            > 3000
+    );
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
 fn scale_two_preserves_physical_target_dimensions() {
     let (info, _) = capture(
         "scale2",

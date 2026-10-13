@@ -8,3 +8,11 @@ glyphs = "ascii"
 format = "24h"
 show_seconds = true
 transition_ms = 320
+
+[[screens]]
+module = "usage"
+duration_seconds = 15
+renderer = "ansi"
+
+[screens.settings]
+refresh_seconds = 60

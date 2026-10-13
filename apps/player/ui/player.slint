@@ -1,4 +1,5 @@
 import { ClockView } from "../../../screens/clock/ui/clock.slint";
+import { UsageView } from "../../../screens/usage/ui/usage.slint";
 import { PreviewControls } from "preview.slint";
 
 export component PlayerWindow inherits Window {
@@ -6,6 +7,10 @@ export component PlayerWindow inherits Window {
     in property <length> viewport-width: 800px;
     in property <length> viewport-height: 480px;
     in property <string> clock-time;
+    in property <bool> usage-mode;
+    in property <float> five-hour;
+    in property <float> weekly;
+    in property <string> usage-message;
     in property <bool> ansi-mode;
     in property <image> ansi-frame;
     in property <bool> paused;
@@ -14,18 +19,32 @@ export component PlayerWindow inherits Window {
     callback toggle-pause();
     callback next();
 
-    title: root.preview ? "Pi Display | Clock preview" : "Pi Display";
+    title: root.preview ? "Pi Display | Screen preview" : "Pi Display";
     background: #000000;
     width: root.viewport-width;
     height: root.viewport-height + (root.preview ? 48px : 0px);
 
-    if !root.ansi-mode: ClockView {
+    if !root.ansi-mode && !root.usage-mode: ClockView {
+        x: 0px;
+        y: 0px;
         width: parent.width;
         height: root.preview ? root.viewport-height : parent.height;
         time: root.clock-time;
     }
 
+    if !root.ansi-mode && root.usage-mode: UsageView {
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: root.preview ? root.viewport-height : parent.height;
+        five-hour: root.five-hour;
+        weekly: root.weekly;
+        message: root.usage-message;
+    }
+
     if root.ansi-mode: Image {
+        x: 0px;
+        y: 0px;
         width: parent.width;
         height: root.preview ? root.viewport-height : parent.height;
         source: root.ansi-frame;

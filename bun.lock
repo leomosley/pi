@@ -14,6 +14,7 @@
         "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/clock": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
+        "@pi-display/usage": "workspace:*",
       },
     },
     "crates/ansi-renderer": {
@@ -29,6 +30,12 @@
         "@pi-display/screen-api": "workspace:*",
       },
     },
+    "screens/usage": {
+      "name": "@pi-display/usage",
+      "dependencies": {
+        "@pi-display/screen-api": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@pi-display/ansi-renderer": ["@pi-display/ansi-renderer@workspace:crates/ansi-renderer"],
@@ -38,6 +45,8 @@
     "@pi-display/player": ["@pi-display/player@workspace:apps/player"],
 
     "@pi-display/screen-api": ["@pi-display/screen-api@workspace:crates/screen-api"],
+
+    "@pi-display/usage": ["@pi-display/usage@workspace:screens/usage"],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.11.7", "", { "os": "darwin", "cpu": "x64" }, "sha512-Z2LFOxwbiJueD1miByXJS/BrW21vv6YaQXZustty5jEX4vQYw6zyh101Sz1QO7WG0mqBzKagZ/DoAeeujI0/Sw=="],
 

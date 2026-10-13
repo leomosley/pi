@@ -1,0 +1,10 @@
+{
+  "name": "@pi-display/usage",
+  "private": true,
+  "dependencies": { "@pi-display/screen-api": "workspace:*" },
+  "scripts": {
+    "build": "cargo build -p screen-usage --locked",
+    "test": "cargo test -p screen-usage --locked",
+    "lint": "cargo clippy -p screen-usage --all-targets --all-features --locked -- -D warnings"
+  }
+}
