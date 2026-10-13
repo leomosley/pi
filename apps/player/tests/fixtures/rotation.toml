@@ -1,0 +1,15 @@
+[[screens]]
+module = "clock"
+duration_seconds = 1
+
+[screens.settings]
+format = "24h"
+show_seconds = true
+
+[[screens]]
+module = "clock"
+duration_seconds = 30
+
+[screens.settings]
+format = "12h"
+show_seconds = false

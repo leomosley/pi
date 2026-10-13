@@ -7,6 +7,7 @@
     "dev": "turbo run dev --filter=@pi-display/player",
     "build": "turbo run build --concurrency=1",
     "test": "turbo run test --concurrency=1",
+    "smoke": "cargo test -p player --test gui --locked -- --ignored --test-threads=1",
     "lint": "turbo run lint --concurrency=1",
     "format": "cargo fmt --all",
     "format:check": "cargo fmt --all -- --check",

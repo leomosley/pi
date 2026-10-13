@@ -24,6 +24,8 @@ bun run test
 bun run lint
 bun run format
 bun run check
+# Optional: opens real windows and checks rendered pixels.
+bun run smoke
 ```
 
 `bun run dev` opens a native window titled **Pi Display | Clock preview** on your

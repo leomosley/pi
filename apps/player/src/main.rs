@@ -32,6 +32,9 @@ struct Args {
     /// Validate configuration and registered screens without opening a window.
     #[arg(long)]
     validate: bool,
+    /// Save an app-only PNG after rendering, then exit. Requires a desktop session.
+    #[arg(long, conflicts_with = "validate")]
+    capture: Option<PathBuf>,
 }
 
 struct PlayerState {
@@ -173,6 +176,24 @@ fn main() -> Result<ExitCode> {
         "Running {} at {}x{} physical pixels, scale {}. Preview controls are outside the display area.",
         display.name, display.width_px, display.height_px, display.scale_factor
     );
+    let capture_error = Rc::new(RefCell::new(None));
+    if let Some(path) = args.capture {
+        let weak = window.as_weak();
+        let capture_error = Rc::clone(&capture_error);
+        Timer::single_shot(std::time::Duration::from_millis(1500), move || {
+            if let Some(window) = weak.upgrade()
+                && let Err(error) = preview::capture(&window, &path)
+            {
+                *capture_error.borrow_mut() = Some(error);
+            }
+            if let Err(error) = slint::quit_event_loop() {
+                *capture_error.borrow_mut() = Some(error.into());
+            }
+        });
+    }
     window.run()?;
+    if let Some(error) = capture_error.borrow_mut().take() {
+        return Err(error);
+    }
     Ok(ExitCode::SUCCESS)
 }

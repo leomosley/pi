@@ -49,3 +49,26 @@ Validate a playlist without opening a GUI:
 ```sh
 cargo run -p player -- --validate --playlist config/playlist.toml
 ```
+
+## App-only screenshots
+
+Capture the native window without including other desktop applications:
+
+```sh
+cargo run -p player -- --preview --capture /tmp/clock-preview.png
+```
+
+The player opens normally, saves a PNG after its first rendered frames, and exits.
+The PNG includes the preview toolbar but excludes desktop window decorations.
+This needs a Wayland or X11 session; it is not a headless renderer.
+
+Run the opt-in native rendering checks with `bun run smoke`. These open and close
+three native windows, checking portrait size, 2× scaling, and clock-format
+rotation. Screenshots are saved to the system temporary directory, or to
+`PI_DISPLAY_TEST_ARTIFACT_DIR` when set.
+
+The player disables Slint 1.18.1's newer software-renderer text-layout path.
+Native screenshots reproduced missing digits after switching from 24-hour to
+12-hour time; the legacy path renders the transition correctly. The smoke test
+checks that those digits remain visible so this workaround can be revisited
+when upgrading Slint.

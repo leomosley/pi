@@ -1,4 +1,4 @@
-import { Button } from "std-widgets.slint";
+import { Button, Palette } from "std-widgets.slint";
 
 export component PreviewControls inherits Rectangle {
     in property <bool> paused;
@@ -6,7 +6,7 @@ export component PreviewControls inherits Rectangle {
     callback previous();
     callback toggle-pause();
     callback next();
-    background: #eeeeee;
+    background: Palette.background;
 
     HorizontalLayout {
         padding: 6px;
@@ -16,7 +16,7 @@ export component PreviewControls inherits Rectangle {
         Button { text: "Next"; clicked => { root.next(); } }
         Text {
             text: root.status;
-            color: #222222;
+            color: Palette.foreground;
             font-size: 12px;
             horizontal-alignment: right;
             vertical-alignment: center;

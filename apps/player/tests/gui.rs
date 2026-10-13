@@ -1,0 +1,75 @@
+//! Explicit opt-in tests that launch the actual native window and inspect its pixels.
+
+use std::{fs, io::BufReader, path::PathBuf, process::Command};
+
+fn capture(name: &str, arguments: &[&str]) -> (png::OutputInfo, Vec<u8>) {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let directory = std::env::var_os("PI_DISPLAY_TEST_ARTIFACT_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::temp_dir().join("pi-display-smoke"));
+    fs::create_dir_all(&directory).unwrap();
+    let path = directory.join(format!("{name}-{}.png", std::process::id()));
+    let output = Command::new(env!("CARGO_BIN_EXE_player"))
+        .current_dir(root)
+        .args(["--preview", "--capture"])
+        .arg(&path)
+        .args(arguments)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let mut reader = png::Decoder::new(BufReader::new(fs::File::open(path).unwrap()))
+        .read_info()
+        .unwrap();
+    let mut pixels = vec![0; reader.output_buffer_size().unwrap()];
+    let info = reader.next_frame(&mut pixels).unwrap();
+    pixels.truncate(info.buffer_size());
+    (info, pixels)
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn portrait_preview_preserves_target_dimensions() {
+    let (info, _) = capture(
+        "portrait",
+        &["--display", "profiles/displays/example-480x800.toml"],
+    );
+    assert_eq!((info.width, info.height), (480, 848));
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn scale_two_preserves_physical_target_dimensions() {
+    let (info, _) = capture(
+        "scale2",
+        &["--display", "apps/player/tests/fixtures/scale2.toml"],
+    );
+    assert_eq!((info.width, info.height), (800, 576));
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn clock_digits_remain_visible_after_automatic_format_transition() {
+    let (info, pixels) = capture(
+        "rotation",
+        &["--playlist", "apps/player/tests/fixtures/rotation.toml"],
+    );
+    assert_eq!(info.color_type, png::ColorType::Rgba);
+    // The digits occupy the left half of the centered clock. A Slint 1.18.1
+    // Parley regression rendered only the AM/PM suffix after this transition.
+    let white_pixels = (160..320)
+        .flat_map(|y| (160..470).map(move |x| (y * info.width as usize + x) * 4))
+        .filter(|&offset| {
+            pixels[offset..offset + 3]
+                .iter()
+                .all(|&channel| channel > 200)
+        })
+        .count();
+    assert!(
+        white_pixels > 1000,
+        "clock digits missing; found {white_pixels} white pixels"
+    );
+}
