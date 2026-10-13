@@ -81,6 +81,7 @@ glyphs = "ascii"  # "ascii", "blocks", or "segments"; used only by ANSI
 [screens.settings]
 format = "24h"
 show_seconds = true
+transition_ms = 320 # 0 disables digit animation; maximum 900 milliseconds
 ```
 
 Override the entire playlist from the command line:
@@ -97,6 +98,22 @@ cell-to-pixel match; other dimensions fit the smaller grid into the viewport.
 Use `--glyphs blocks` for the original solid-block presentation or
 `--glyphs segments` for compact `_`/`|` character art. These choose the glyph
 library, not the rasterizer. See the crate README for adding custom glyphs.
+
+The ANSI clock rolls only the glyphs that change. Each old digit moves upward
+and the new digit enters from below inside the same fixed glyph slot. Separators
+and unchanged digits stay still. There is one digital clock, with no duplicate
+time display or analog face. Startup and playlist changes display the current
+time immediately. The original native Slint clock remains non-animated.
+
+The player ticks every 33 milliseconds; frame caching avoids rasterizing the
+same character rows twice. Actual hardware frame rate depends on the Pi and
+display driver, especially for SPI panels.
+
+Generate a deterministic minute-rollover preview:
+
+```sh
+cargo run -p ansi-renderer --example clock-roll -- artifacts/clock-roll.gif
+```
 
 ## App-only screenshots
 

@@ -180,7 +180,7 @@ fn main() -> Result<ExitCode> {
     let weak = window.as_weak();
     timer.start(
         TimerMode::Repeated,
-        std::time::Duration::from_millis(100),
+        std::time::Duration::from_millis(33),
         move || {
             let Some(window) = weak.upgrade() else { return };
             let mut state = state.borrow_mut();

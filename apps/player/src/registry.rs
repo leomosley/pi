@@ -67,7 +67,7 @@ impl ScreenInstance {
                     None
                 };
                 Ok(Self::Clock {
-                    screen: ClockScreen::new(settings),
+                    screen: ClockScreen::new(settings)?,
                     ansi,
                 })
             }

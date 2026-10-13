@@ -7,3 +7,4 @@ glyphs = "ascii"
 [screens.settings]
 format = "24h"
 show_seconds = true
+transition_ms = 320

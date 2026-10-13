@@ -45,7 +45,7 @@ or emit ordinary ANSI text directly without using character art.
 ## Lifecycle
 
 - `activate`: prepare the visible screen and populate its initial state.
-- `tick`: update state while visible. Currently called every 100 milliseconds.
+- `tick`: update state while visible. Currently called every 33 milliseconds.
 - `deactivate`: stop subscriptions or timers when hidden or shutting down.
 
 All these calls run on the UI thread. Keep them short. Perform network requests

@@ -101,7 +101,9 @@ dependencies = [
 name = "ansi-renderer"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "font8x8",
+ "gif",
  "serde",
  "thiserror 2.0.21",
  "vte",

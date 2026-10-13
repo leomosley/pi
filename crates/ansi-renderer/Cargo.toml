@@ -11,5 +11,9 @@ serde.workspace = true
 thiserror.workspace = true
 vte.workspace = true
 
+[dev-dependencies]
+anyhow.workspace = true
+gif = "0.14"
+
 [lints]
 workspace = true

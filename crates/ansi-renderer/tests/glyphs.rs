@@ -104,3 +104,70 @@ fn every_builtin_glyph_is_rectangular() {
 fn unknown_glyph_set_is_rejected() {
     assert!("unknown".parse::<GlyphSet>().is_err());
 }
+
+#[test]
+fn rolling_endpoints_match_static_frames() {
+    let library = GlyphLibrary::preset(GlyphSet::Ascii);
+    assert_eq!(
+        (
+            library.render_rolling("12:59:59", "13:00:00", 0.0, 60, 40),
+            library.render_rolling("12:59:59", "13:00:00", 1.0, 60, 40)
+        ),
+        (
+            library.render_centered("12:59:59", 60, 40),
+            library.render_centered("13:00:00", 60, 40)
+        )
+    );
+}
+
+#[test]
+fn rolling_glyphs_are_clipped_to_one_visual_slot() {
+    let mut library = GlyphLibrary::preset(GlyphSet::Ascii);
+    library.insert('A', Glyph::new(&["AA", "BB", "CC", "DD"]).unwrap());
+    library.insert('B', Glyph::new(&["11", "22", "33", "44"]).unwrap());
+    let mut terminal = Terminal::new(10, 8).unwrap();
+    terminal.feed(library.render_rolling("A", "B", 0.5, 10, 8).as_bytes());
+    let rows: Vec<char> = (0..8)
+        .map(|row| terminal.cell(4, row).unwrap().character)
+        .collect();
+    assert_eq!(rows, vec![' ', ' ', 'C', 'D', '1', '2', ' ', ' ']);
+}
+
+#[test]
+fn unchanged_digits_and_separators_remain_stationary() {
+    let library = GlyphLibrary::preset(GlyphSet::Ascii);
+    let mut before = Terminal::new(60, 40).unwrap();
+    before.feed(library.render_centered("12:34:56", 60, 40).as_bytes());
+    let mut during = Terminal::new(60, 40).unwrap();
+    during.feed(
+        library
+            .render_rolling("12:34:56", "12:34:57", 0.5, 60, 40)
+            .as_bytes(),
+    );
+    // Only the final 5-cell-wide digit, starting at column 44, may change.
+    for row in 0..40 {
+        for column in 0..60 {
+            if !(44..49).contains(&column) {
+                assert_eq!(before.cell(column, row), during.cell(column, row));
+            }
+        }
+    }
+}
+
+#[test]
+fn different_length_transitions_fall_back_to_static_text() {
+    let library = GlyphLibrary::preset(GlyphSet::Ascii);
+    assert_eq!(
+        library.render_rolling("12:34", "12:34 PM", 0.5, 60, 40),
+        library.render_centered("12:34 PM", 60, 40)
+    );
+}
+
+#[test]
+fn non_finite_progress_is_safe() {
+    let library = GlyphLibrary::preset(GlyphSet::Ascii);
+    assert_eq!(
+        library.render_rolling("12:34:56", "12:34:57", f32::NAN, 60, 40),
+        library.render_centered("12:34:57", 60, 40)
+    );
+}

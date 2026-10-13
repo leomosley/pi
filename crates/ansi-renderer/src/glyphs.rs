@@ -138,6 +138,38 @@ impl GlyphLibrary {
     /// Compose a centered, independently-cleared ANSI frame in white on black.
     /// If the art will not fit, use centered normal-sized text clipped to the grid.
     pub fn render_centered(&self, text: &str, columns: usize, rows: usize) -> String {
+        self.render(text, columns, rows, None)
+    }
+
+    /// Roll only changed glyphs upward, clipping old/new rows inside one glyph slot.
+    /// Progress 0 is the old frame; progress 1 is the new frame. Different-sized
+    /// glyphs or text fall back to a static frame so surrounding content never moves.
+    pub fn render_rolling(
+        &self,
+        previous: &str,
+        text: &str,
+        progress: f32,
+        columns: usize,
+        rows: usize,
+    ) -> String {
+        if !progress.is_finite() {
+            return self.render_centered(text, columns, rows);
+        }
+        self.render(
+            text,
+            columns,
+            rows,
+            Some((previous, progress.clamp(0.0, 1.0))),
+        )
+    }
+
+    fn render(
+        &self,
+        text: &str,
+        columns: usize,
+        rows: usize,
+        transition: Option<(&str, f32)>,
+    ) -> String {
         let mut output = String::from("\x1b[0m\x1b[2J\x1b[H\x1b[97m");
         if columns == 0 || rows == 0 {
             return output;
@@ -157,6 +189,19 @@ impl GlyphLibrary {
             .sum::<usize>()
             .saturating_sub(1);
         let height = glyphs.iter().map(|glyph| glyph.height()).max().unwrap_or(0);
+        let previous = transition.and_then(|(text, progress)| {
+            let previous: Vec<char> = text
+                .chars()
+                .filter(|ch| !ch.is_control())
+                .take(columns.min(4096))
+                .collect();
+            let compatible = previous.len() == characters.len()
+                && previous.iter().zip(&glyphs).all(|(&ch, current)| {
+                    let old = self.glyph(ch);
+                    old.width() == current.width() && old.height() == current.height()
+                });
+            compatible.then_some((previous, progress))
+        });
         if width > columns || height > rows {
             let left = columns.saturating_sub(characters.len()) / 2;
             let _ = write!(output, "\x1b[{};{}H", rows / 2 + 1, left + 1);
@@ -170,7 +215,21 @@ impl GlyphLibrary {
                     if index > 0 {
                         output.push(' ');
                     }
-                    if let Some(line) = glyph.rows.get(row) {
+                    let line = if let Some((previous, progress)) = &previous
+                        && previous[index] != characters[index]
+                        && row < glyph.height()
+                    {
+                        let shift = (progress * glyph.height() as f32).floor() as usize;
+                        let source_row = row + shift;
+                        if source_row < glyph.height() {
+                            self.glyph(previous[index]).rows.get(source_row)
+                        } else {
+                            glyph.rows.get(source_row - glyph.height())
+                        }
+                    } else {
+                        glyph.rows.get(row)
+                    };
+                    if let Some(line) = line {
                         output.push_str(line);
                     } else {
                         output.extend(std::iter::repeat_n(' ', glyph.width));

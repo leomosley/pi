@@ -46,6 +46,12 @@ Custom glyphs must be rectangular, 1–64 cells wide and high, and contain no
 control characters. They are Rust data, not external font files. Applications
 can provide additional named libraries by constructing and registering them.
 
+`GlyphLibrary::render_rolling(previous, current, progress, columns, rows)`
+animates only changed characters. Progress runs from 0 to 1; old and new rows
+are clipped to one fixed glyph slot. Unchanged characters stay stationary.
+Transitions between different-sized glyphs or different-length text use the
+static target frame instead. The clock uses this method for digit changes.
+
 ## Supported ANSI subset
 
 - Cursor movement: CSI `A B C D G H f`, save/restore `s u` and ESC `7 8`.

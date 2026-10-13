@@ -56,6 +56,10 @@ The clock uses the operating system's local timezone. Set `format = "12h"` or
 `"24h"` and `show_seconds = true` or `false` in `config/playlist.toml`.
 Configuration is read at startup; restart the player after editing it.
 
+ANSI digits roll when they change, without adding another clock element.
+Set `transition_ms = 320` in the screen settings to control the duration, or
+`0` to disable it. Separators and unchanged digits remain still.
+
 See [creating a screen](docs/creating-a-screen.md),
 [previewing](docs/previewing.md), and [running on the Pi](docs/raspberry-pi.md).
 
