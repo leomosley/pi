@@ -2,6 +2,7 @@
 
 use ansi_renderer::{Glyph, GlyphLibrary};
 use screen_api::Screen;
+use screen_widgets::RefreshIndicator;
 use serde::Deserialize;
 use std::{
     fmt::Write,
@@ -185,6 +186,8 @@ pub struct PortfolioScreen {
     message: &'static str,
     pending: Option<Receiver<Result<PortfolioValue, PortfolioError>>>,
     next_refresh: Instant,
+    refresh_interval: Duration,
+    request_started: Instant,
 }
 
 impl PortfolioScreen {
@@ -215,13 +218,22 @@ impl PortfolioScreen {
             None
         };
         let message = if value.is_some() { "" } else { "Loading" };
+        let now = Instant::now();
+        let refresh_interval = Duration::from_secs(settings.refresh_seconds);
+        let next_refresh = if settings.demo {
+            now + refresh_interval
+        } else {
+            now
+        };
         Ok(Self {
             settings,
             active: false,
             value,
             message,
             pending: None,
-            next_refresh: Instant::now(),
+            next_refresh,
+            refresh_interval,
+            request_started: now,
         })
     }
 
@@ -235,13 +247,42 @@ impl PortfolioScreen {
         self.message
     }
 
+    pub fn display_amount(&self) -> String {
+        if self.value.is_none() {
+            return "--".into();
+        }
+        let symbol = match self.currency() {
+            "GBP" => "£",
+            "EUR" => "€",
+            "USD" => "$",
+            "JPY" => "¥",
+            currency => currency,
+        };
+        if symbol.chars().count() == 1 {
+            format!("{symbol}{}", self.amount())
+        } else {
+            format!("{symbol} {}", self.amount())
+        }
+    }
+
+    pub fn refresh_indicator(&self) -> RefreshIndicator {
+        self.refresh_indicator_at(Instant::now())
+    }
+
+    fn refresh_indicator_at(&self, now: Instant) -> RefreshIndicator {
+        if self.pending.is_some() {
+            RefreshIndicator::refreshing(now.saturating_duration_since(self.request_started))
+        } else {
+            RefreshIndicator::waiting(
+                self.next_refresh.saturating_duration_since(now),
+                self.refresh_interval,
+            )
+        }
+    }
+
     pub fn ansi_frame(&self, columns: usize, rows: usize, glyphs: &GlyphLibrary) -> String {
-        let mut output = glyphs.render_centered(self.amount(), columns, rows);
-        let heading = format!("Trading 212  {}", self.currency());
-        for (text, row) in [
-            (heading.as_str(), rows.saturating_sub(7) / 2),
-            (self.message, rows.saturating_sub(2)),
-        ] {
+        let mut output = glyphs.render_centered(&self.display_amount(), columns, rows);
+        for (text, row) in [(self.message, rows.saturating_sub(4))] {
             if !text.is_empty() {
                 let text: String = text.chars().take(columns).collect();
                 let left = columns.saturating_sub(text.chars().count()) / 2;
@@ -249,6 +290,7 @@ impl PortfolioScreen {
             }
         }
         output.push_str("\x1b[0m");
+        output.push_str(&self.refresh_indicator().ansi_bottom_right(columns, rows));
         output
     }
 }
@@ -261,6 +303,30 @@ pub fn portfolio_glyphs(
     library.insert(
         ',',
         Glyph::new(&["  ", "  ", "  ", "  ", "  ", " #", "# "])?,
+    );
+    library.insert(
+        '£',
+        Glyph::new(&[
+            "  ###", " #   ", " #   ", "#### ", " #   ", " #   ", "#####",
+        ])?,
+    );
+    library.insert(
+        '€',
+        Glyph::new(&[
+            "  ###", " #   ", "#### ", " #   ", "#### ", " #   ", "  ###",
+        ])?,
+    );
+    library.insert(
+        '$',
+        Glyph::new(&[
+            "  #  ", " ####", "# #  ", " ### ", "  # #", "#### ", "  #  ",
+        ])?,
+    );
+    library.insert(
+        '¥',
+        Glyph::new(&[
+            "#   #", " # # ", "  #  ", "#####", "  #  ", "#####", "  #  ",
+        ])?,
     );
     library.insert(
         '-',
@@ -277,7 +343,13 @@ impl Screen for PortfolioScreen {
         self.active = false;
     }
     fn tick(&mut self) {
-        if !self.active || self.settings.demo {
+        if !self.active {
+            return;
+        }
+        if self.settings.demo {
+            if Instant::now() >= self.next_refresh {
+                self.next_refresh = Instant::now() + self.refresh_interval;
+            }
             return;
         }
         if let Some(receiver) = &self.pending {
@@ -309,10 +381,12 @@ impl Screen for PortfolioScreen {
                     }
                 }
                 self.pending = None;
+                self.refresh_interval = Duration::from_secs(delay);
                 self.next_refresh = Instant::now() + Duration::from_secs(delay);
             }
         }
         if self.pending.is_none() && Instant::now() >= self.next_refresh {
+            self.request_started = Instant::now();
             let (sender, receiver) = mpsc::channel();
             let settings = self.settings.clone();
             match thread::Builder::new()
@@ -448,5 +522,29 @@ mod tests {
         screen.activate();
         screen.tick();
         assert!(screen.next_refresh.duration_since(Instant::now()) > Duration::from_secs(299));
+    }
+
+    #[test]
+    fn indicator_tracks_the_actual_retry_interval() {
+        let mut screen = PortfolioScreen::new(Default::default()).unwrap();
+        let now = Instant::now();
+        screen.refresh_interval = Duration::from_secs(300);
+        screen.next_refresh = now + Duration::from_secs(150);
+        assert_eq!(screen.refresh_indicator_at(now).mask, 15);
+    }
+
+    #[test]
+    fn indicator_animates_only_during_request() {
+        let mut screen = PortfolioScreen::new(Default::default()).unwrap();
+        let (_, receiver) = mpsc::channel();
+        screen.pending = Some(receiver);
+        let now = Instant::now();
+        screen.request_started = now;
+        assert_eq!(
+            screen
+                .refresh_indicator_at(now + Duration::from_millis(450))
+                .mask,
+            8
+        );
     }
 }

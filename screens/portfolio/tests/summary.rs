@@ -98,3 +98,36 @@ fn unavailable_value_is_not_fake_zero() {
     let screen = PortfolioScreen::new(PortfolioSettings::default()).unwrap();
     assert_eq!(screen.amount(), "--");
 }
+
+#[test]
+fn gbp_display_includes_pound_symbol() {
+    let screen = PortfolioScreen::new(PortfolioSettings {
+        demo: true,
+        ..Default::default()
+    })
+    .unwrap();
+    assert_eq!(screen.display_amount(), "£12,345.67");
+}
+
+#[test]
+fn ascii_frame_has_no_brand_heading() {
+    let screen = PortfolioScreen::new(PortfolioSettings {
+        demo: true,
+        ..Default::default()
+    })
+    .unwrap();
+    let glyphs = screen_portfolio::portfolio_glyphs(ansi_renderer::GlyphLibrary::preset(
+        ansi_renderer::GlyphSet::Ascii,
+    ))
+    .unwrap();
+    assert!(!screen.ansi_frame(60, 40, &glyphs).contains("Trading 212"));
+}
+
+#[test]
+fn pound_has_a_real_art_glyph() {
+    let glyphs = screen_portfolio::portfolio_glyphs(ansi_renderer::GlyphLibrary::preset(
+        ansi_renderer::GlyphSet::Ascii,
+    ))
+    .unwrap();
+    assert_eq!(glyphs.glyph('£').rows()[0], "  ###");
+}

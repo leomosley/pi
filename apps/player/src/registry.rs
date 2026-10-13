@@ -166,9 +166,10 @@ impl ScreenInstance {
                     );
                     window.set_ansi_frame(surface.render(&frame));
                 } else {
-                    window.set_portfolio_amount(screen.amount().into());
-                    window.set_portfolio_amount_length(screen.amount().len() as i32);
-                    window.set_portfolio_currency(screen.currency().into());
+                    let amount = screen.display_amount();
+                    window.set_portfolio_amount_length(amount.chars().count() as i32);
+                    window.set_portfolio_amount(amount.into());
+                    window.set_portfolio_refresh_mask(i32::from(screen.refresh_indicator().mask));
                     window.set_portfolio_message(screen.message().into());
                 }
             }

@@ -1,7 +1,11 @@
 # Trading 212 portfolio value
 
-The `portfolio` screen displays one current account value and its primary
-currency. No day/week/lifetime deltas or percentage returns are shown.
+The `portfolio` screen displays one current account value with its currency
+symbol, such as `£8,543.80`. There is no brand heading, day/week/lifetime delta,
+or percentage return. A small eight-segment strip in the bottom-right drains
+until the next refresh. During a request, one segment moves along the strip.
+No numeric countdown is shown. Retry backoff uses its actual longer interval.
+The shared `screen-widgets` crate supplies this indicator for both ANSI and Slint.
 
 It makes a read-only GET directly to:
 
@@ -81,7 +85,7 @@ cargo run -p player -- --preview --playlist config/portfolio-demo.toml \
   --display profiles/displays/dfrobot-fit0820-480x320.toml
 ```
 
-This explicit demo shows GBP 12,345.67. It is sample data, makes no network
+This explicit demo shows £12,345.67. It is sample data, makes no network
 requests, and does not read credentials. Use `--renderer native` for a plain
 text amount instead of ASCII character art.
 

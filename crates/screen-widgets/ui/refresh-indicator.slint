@@ -1,0 +1,13 @@
+export component RefreshIndicator inherits Rectangle {
+    in property <int> mask;
+    width: 64px;
+    height: 8px;
+    background: transparent;
+    for bit[index] in [1, 2, 4, 8, 16, 32, 64, 128]: Rectangle {
+        x: index * root.width / 8;
+        y: 2px;
+        width: root.width / 8 - 3px;
+        height: 4px;
+        background: mod(floor(root.mask / bit), 2) == 1 ? #fff : #333;
+    }
+}

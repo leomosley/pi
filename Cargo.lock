@@ -4033,6 +4033,7 @@ dependencies = [
  "dotenvy",
  "reqwest",
  "screen-api",
+ "screen-widgets",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -4049,6 +4050,10 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
 ]
+
+[[package]]
+name = "screen-widgets"
+version = "0.1.0"
 
 [[package]]
 name = "sctk-adwaita"

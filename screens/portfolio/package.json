@@ -3,7 +3,8 @@
   "private": true,
   "dependencies": {
     "@pi-display/screen-api": "workspace:*",
-    "@pi-display/ansi-renderer": "workspace:*"
+    "@pi-display/ansi-renderer": "workspace:*",
+    "@pi-display/screen-widgets": "workspace:*"
   },
   "scripts": {
     "build": "cargo build -p screen-portfolio --locked",

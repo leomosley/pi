@@ -24,6 +24,9 @@
     "crates/screen-api": {
       "name": "@pi-display/screen-api",
     },
+    "crates/screen-widgets": {
+      "name": "@pi-display/screen-widgets",
+    },
     "screens/clock": {
       "name": "@pi-display/clock",
       "dependencies": {
@@ -36,6 +39,7 @@
       "dependencies": {
         "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
+        "@pi-display/screen-widgets": "workspace:*",
       },
     },
     "screens/usage": {
@@ -55,6 +59,8 @@
     "@pi-display/portfolio": ["@pi-display/portfolio@workspace:screens/portfolio"],
 
     "@pi-display/screen-api": ["@pi-display/screen-api@workspace:crates/screen-api"],
+
+    "@pi-display/screen-widgets": ["@pi-display/screen-widgets@workspace:crates/screen-widgets"],
 
     "@pi-display/usage": ["@pi-display/usage@workspace:screens/usage"],
 

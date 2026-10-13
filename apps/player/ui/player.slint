@@ -11,7 +11,7 @@ export component PlayerWindow inherits Window {
     in property <bool> portfolio-mode;
     in property <string> portfolio-amount;
     in property <int> portfolio-amount-length;
-    in property <string> portfolio-currency;
+    in property <int> portfolio-refresh-mask;
     in property <string> portfolio-message;
     in property <bool> usage-mode;
     in property <float> five-hour;
@@ -45,7 +45,7 @@ export component PlayerWindow inherits Window {
         height: root.preview ? root.viewport-height : parent.height;
         amount: root.portfolio-amount;
         amount-length: root.portfolio-amount-length;
-        currency: root.portfolio-currency;
+        refresh-mask: root.portfolio-refresh-mask;
         message: root.portfolio-message;
     }
 

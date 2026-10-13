@@ -1,0 +1,9 @@
+{
+  "name": "@pi-display/screen-widgets",
+  "private": true,
+  "scripts": {
+    "build": "cargo build -p screen-widgets --locked",
+    "test": "cargo test -p screen-widgets --locked",
+    "lint": "cargo clippy -p screen-widgets --all-targets --all-features --locked -- -D warnings"
+  }
+}

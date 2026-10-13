@@ -1,5 +1,5 @@
 [workspace]
-members = ["apps/player", "crates/screen-api", "crates/ansi-renderer", "screens/clock", "screens/usage", "screens/portfolio"]
+members = ["apps/player", "crates/screen-api", "crates/ansi-renderer", "crates/screen-widgets", "screens/clock", "screens/usage", "screens/portfolio"]
 resolver = "2"
 
 [workspace.package]
@@ -27,6 +27,7 @@ screen-api = { path = "crates/screen-api" }
 screen-clock = { path = "screens/clock" }
 screen-usage = { path = "screens/usage" }
 screen-portfolio = { path = "screens/portfolio" }
+screen-widgets = { path = "crates/screen-widgets" }
 
 [workspace.lints.rust]
 # Slint's generated vtable macros allow their own unsafe internals. Deny unsafe

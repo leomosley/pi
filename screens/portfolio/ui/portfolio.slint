@@ -1,19 +1,11 @@
+import { RefreshIndicator } from "../../../crates/screen-widgets/ui/refresh-indicator.slint";
+
 export component PortfolioView inherits Rectangle {
     in property <string> amount;
     in property <int> amount-length: 10;
-    in property <string> currency;
+    in property <int> refresh-mask;
     in property <string> message;
     background: #000;
-    Text {
-        y: parent.height / 2 - 72px;
-        height: 28px;
-        width: parent.width;
-        text: "Trading 212  " + root.currency;
-        color: #aaa;
-        font-family: "DejaVu Sans Mono";
-        font-size: 16px;
-        horizontal-alignment: center;
-    }
     Text {
         width: parent.width;
         height: parent.height;
@@ -25,7 +17,7 @@ export component PortfolioView inherits Rectangle {
         vertical-alignment: center;
     }
     Text {
-        y: parent.height - 40px;
+        y: parent.height - 64px;
         height: 32px;
         width: parent.width;
         text: root.message;
@@ -33,5 +25,11 @@ export component PortfolioView inherits Rectangle {
         font-size: 12px;
         horizontal-alignment: center;
         wrap: word-wrap;
+    }
+
+    RefreshIndicator {
+        x: parent.width - self.width - 8px;
+        y: parent.height - self.height - 8px;
+        mask: root.refresh-mask;
     }
 }

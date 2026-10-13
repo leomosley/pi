@@ -8,6 +8,7 @@ publish.workspace = true
 [dependencies]
 screen-api.workspace = true
 ansi-renderer.workspace = true
+screen-widgets.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 reqwest.workspace = true
