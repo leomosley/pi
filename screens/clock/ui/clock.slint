@@ -1,0 +1,15 @@
+export component ClockView inherits Rectangle {
+    in property <string> time;
+    background: #000000;
+
+    Text {
+        width: parent.width;
+        height: parent.height;
+        text: root.time;
+        color: #ffffff;
+        font-family: "DejaVu Sans Mono";
+        font-size: min(root.width / 9, root.height / 3);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

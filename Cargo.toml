@@ -21,7 +21,9 @@ screen-api = { path = "crates/screen-api" }
 screen-clock = { path = "screens/clock" }
 
 [workspace.lints.rust]
-unsafe_code = "forbid"
+# Slint's generated vtable macros allow their own unsafe internals. Deny unsafe
+# in handwritten code without preventing those generated local overrides.
+unsafe_code = "deny"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }

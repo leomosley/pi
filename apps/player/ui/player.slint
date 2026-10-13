@@ -1,0 +1,36 @@
+import { ClockView } from "../../../screens/clock/ui/clock.slint";
+import { PreviewControls } from "preview.slint";
+
+export component PlayerWindow inherits Window {
+    in property <bool> preview: true;
+    in property <length> viewport-width: 800px;
+    in property <length> viewport-height: 480px;
+    in property <string> clock-time;
+    in property <bool> paused;
+    in property <string> status;
+    callback previous();
+    callback toggle-pause();
+    callback next();
+
+    title: root.preview ? "Pi Display | Clock preview" : "Pi Display";
+    background: #000000;
+    width: root.viewport-width;
+    height: root.viewport-height + (root.preview ? 48px : 0px);
+
+    ClockView {
+        width: parent.width;
+        height: root.preview ? root.viewport-height : parent.height;
+        time: root.clock-time;
+    }
+
+    if root.preview: PreviewControls {
+        y: root.viewport-height;
+        width: parent.width;
+        height: 48px;
+        paused: root.paused;
+        status: root.status;
+        previous => { root.previous(); }
+        toggle-pause => { root.toggle-pause(); }
+        next => { root.next(); }
+    }
+}

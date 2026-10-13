@@ -1,0 +1,27 @@
+import { Button } from "std-widgets.slint";
+
+export component PreviewControls inherits Rectangle {
+    in property <bool> paused;
+    in property <string> status;
+    callback previous();
+    callback toggle-pause();
+    callback next();
+    background: #eeeeee;
+
+    HorizontalLayout {
+        padding: 6px;
+        spacing: 6px;
+        Button { text: "Previous"; clicked => { root.previous(); } }
+        Button { text: root.paused ? "Resume" : "Pause"; clicked => { root.toggle-pause(); } }
+        Button { text: "Next"; clicked => { root.next(); } }
+        Text {
+            text: root.status;
+            color: #222222;
+            font-size: 12px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+            overflow: elide;
+        }
+    }
+}

@@ -4,6 +4,18 @@
     "build": { "dependsOn": ["^build"], "cache": false },
     "test": { "dependsOn": ["^build"], "cache": false },
     "lint": { "cache": false },
-    "dev": { "cache": false, "persistent": true }
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": [
+        "DISPLAY",
+        "WAYLAND_DISPLAY",
+        "XDG_RUNTIME_DIR",
+        "XAUTHORITY",
+        "DBUS_SESSION_BUS_ADDRESS",
+        "SLINT_BACKEND",
+        "WINIT_UNIX_BACKEND"
+      ]
+    }
   }
 }
