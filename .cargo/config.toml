@@ -1,0 +1,3 @@
+[build]
+# Slint's first build is sizeable; keep memory use bounded on development machines.
+jobs = 2

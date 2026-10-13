@@ -1,0 +1,9 @@
+{
+  "name": "@pi-display/screen-api",
+  "private": true,
+  "scripts": {
+    "build": "cargo build -p screen-api --locked",
+    "test": "cargo test -p screen-api --locked",
+    "lint": "cargo clippy -p screen-api --all-targets --all-features --locked -- -D warnings"
+  }
+}

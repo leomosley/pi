@@ -1,0 +1,10 @@
+{
+  "name": "@pi-display/clock",
+  "private": true,
+  "dependencies": { "@pi-display/screen-api": "workspace:*" },
+  "scripts": {
+    "build": "cargo build -p screen-clock --locked",
+    "test": "cargo test -p screen-clock --locked",
+    "lint": "cargo clippy -p screen-clock --all-targets --all-features --locked -- -D warnings"
+  }
+}

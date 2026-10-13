@@ -1,0 +1,14 @@
+{
+  "name": "@pi-display/player",
+  "private": true,
+  "dependencies": {
+    "@pi-display/screen-api": "workspace:*",
+    "@pi-display/clock": "workspace:*"
+  },
+  "scripts": {
+    "dev": "cargo run -p player -- --preview --display ../../profiles/displays/example-800x480.toml --playlist ../../config/playlist.toml",
+    "build": "cargo build -p player --locked",
+    "test": "cargo test -p player --locked",
+    "lint": "cargo clippy -p player --all-targets --all-features --locked -- -D warnings"
+  }
+}

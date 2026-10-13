@@ -1,0 +1,18 @@
+{
+  "name": "pi-display",
+  "private": true,
+  "packageManager": "bun@1.4.3",
+  "workspaces": ["apps/*", "crates/*", "screens/*"],
+  "scripts": {
+    "dev": "turbo run dev --filter=@pi-display/player",
+    "build": "turbo run build --concurrency=1",
+    "test": "turbo run test --concurrency=1",
+    "lint": "turbo run lint --concurrency=1",
+    "format": "cargo fmt --all",
+    "format:check": "cargo fmt --all -- --check",
+    "check": "bun run format:check && bun run test && bun run lint && bun run build"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.0"
+  }
+}

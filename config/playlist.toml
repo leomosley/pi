@@ -1,0 +1,7 @@
+[[screens]]
+module = "clock"
+duration_seconds = 30
+
+[screens.settings]
+format = "24h"
+show_seconds = true

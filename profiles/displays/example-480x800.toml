@@ -1,0 +1,4 @@
+name = "Example portrait display"
+width_px = 480
+height_px = 800
+scale_factor = 1.0
