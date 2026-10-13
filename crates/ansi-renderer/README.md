@@ -16,6 +16,36 @@ let frame = screen.rasterize(); // 480 × 320 opaque RGBA pixels
 Cells are 8×8 physical pixels. Glyphs have no anti-aliasing. Integer enlargement
 with nearest-neighbour sampling preserves their pixels.
 
+## Character-art glyph libraries
+
+The rasterizer's 8×8 font draws individual terminal characters. `GlyphLibrary`
+composes larger letters and digits out of those characters:
+
+- `ascii`: 5×7 character-art letters and digits made from `#` and spaces.
+- `blocks`: the same shapes made from solid `█` characters.
+- `segments`: compact 3-row digits made from `_`, `|`, and spaces. Also includes
+  the A/P/M suffix used by clocks; other letters use the fallback glyph.
+
+ASCII and blocks include A–Z, 0–9, colon, and space; lowercase uses uppercase
+shapes. Unknown characters use a question-mark shape. The composer centers art
+in the available grid, or falls back to clipped normal text if the art won't fit.
+
+Custom libraries can extend or replace individual glyphs:
+
+```rust
+use ansi_renderer::{Glyph, GlyphLibrary, GlyphSet, Terminal};
+
+let mut glyphs = GlyphLibrary::preset(GlyphSet::Ascii);
+glyphs.insert('0', Glyph::new(&[" @@ ", "@  @", "@  @", " @@ "])?);
+let mut screen = Terminal::new(60, 40)?;
+screen.feed(glyphs.render_centered("12:00", 60, 40).as_bytes());
+let pixels = screen.rasterize();
+```
+
+Custom glyphs must be rectangular, 1–64 cells wide and high, and contain no
+control characters. They are Rust data, not external font files. Applications
+can provide additional named libraries by constructing and registering them.
+
 ## Supported ANSI subset
 
 - Cursor movement: CSI `A B C D G H f`, save/restore `s u` and ESC `7 8`.

@@ -1,4 +1,4 @@
-use ansi_renderer::{CELL_HEIGHT, CELL_WIDTH, Terminal};
+use ansi_renderer::{CELL_HEIGHT, CELL_WIDTH, GlyphLibrary, GlyphSet, Terminal};
 use anyhow::{Context, Result, bail};
 use screen_api::Screen;
 use screen_clock::{ClockScreen, ClockSettings};
@@ -12,10 +12,11 @@ pub struct AnsiSurface {
     terminal: Terminal,
     last_source: String,
     image: slint::Image,
+    glyphs: GlyphLibrary,
 }
 
 impl AnsiSurface {
-    fn new(display: &DisplayProfile) -> Result<Self> {
+    fn new(display: &DisplayProfile, glyphs: GlyphSet) -> Result<Self> {
         Ok(Self {
             terminal: Terminal::new(
                 (display.width_px / CELL_WIDTH) as usize,
@@ -24,6 +25,7 @@ impl AnsiSurface {
             .context("display is too large for the ANSI renderer")?,
             last_source: String::new(),
             image: slint::Image::default(),
+            glyphs: GlyphLibrary::preset(glyphs),
         })
     }
 
@@ -60,7 +62,7 @@ impl ScreenInstance {
                     .try_into()
                     .context("invalid clock settings")?;
                 let ansi = if entry.renderer == Renderer::Ansi {
-                    Some(AnsiSurface::new(display)?)
+                    Some(AnsiSurface::new(display, entry.glyphs)?)
                 } else {
                     None
                 };
@@ -78,8 +80,11 @@ impl ScreenInstance {
             Self::Clock { screen, ansi } => {
                 window.set_ansi_mode(ansi.is_some());
                 if let Some(surface) = ansi {
-                    let frame =
-                        screen.ansi_frame(surface.terminal.columns(), surface.terminal.rows());
+                    let frame = screen.ansi_frame(
+                        surface.terminal.columns(),
+                        surface.terminal.rows(),
+                        &surface.glyphs,
+                    );
                     window.set_ansi_frame(surface.render(&frame));
                 } else {
                     window.set_clock_time(screen.time().into());
@@ -128,6 +133,7 @@ mod tests {
             module: "missing".into(),
             duration_seconds: 10,
             renderer: Renderer::Native,
+            glyphs: GlyphSet::Ascii,
             settings: toml::Table::new(),
         };
         assert!(ScreenInstance::build(&entry, &display()).is_err());

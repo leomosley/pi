@@ -89,6 +89,8 @@ fn ansi_clock_is_rendered_as_exact_black_and_white_blocks() {
             "profiles/displays/dfrobot-fit0820-480x320.toml",
             "--renderer",
             "ansi",
+            "--glyphs",
+            "blocks",
         ],
     );
     assert_eq!((info.width, info.height), (480, 368));
@@ -117,4 +119,45 @@ fn ansi_clock_is_rendered_as_exact_black_and_white_blocks() {
             }
         }
     }
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn ascii_clock_uses_hash_characters_rather_than_solid_blocks() {
+    let (info, pixels) = capture(
+        "ascii",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--renderer",
+            "ansi",
+            "--glyphs",
+            "ascii",
+        ],
+    );
+    assert_eq!((info.width, info.height), (480, 368));
+    let mut character = ansi_renderer::Terminal::new(1, 1).unwrap();
+    character.feed(b"#");
+    let hash = character.rasterize();
+    let mut hash_cells = 0;
+    for cell_y in 0..40 {
+        for cell_x in 0..60 {
+            let mut actual = Vec::with_capacity(8 * 8 * 4);
+            for y in 0..8 {
+                let offset = ((cell_y * 8 + y) * 480 + cell_x * 8) * 4;
+                actual.extend_from_slice(&pixels[offset..offset + 8 * 4]);
+            }
+            if actual.chunks_exact(4).any(|pixel| pixel[..3] != [0; 3]) {
+                assert_eq!(
+                    actual, hash.pixels,
+                    "nonblank cell must contain the actual '#' glyph"
+                );
+                hash_cells += 1;
+            }
+        }
+    }
+    assert!(
+        hash_cells > 20,
+        "clock art should contain readable ASCII digits"
+    );
 }

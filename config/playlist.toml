@@ -2,6 +2,7 @@
 module = "clock"
 duration_seconds = 30
 renderer = "ansi"
+glyphs = "ascii"
 
 [screens.settings]
 format = "24h"

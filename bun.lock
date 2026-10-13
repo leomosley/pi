@@ -25,6 +25,7 @@
     "screens/clock": {
       "name": "@pi-display/clock",
       "dependencies": {
+        "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
       },
     },

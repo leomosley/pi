@@ -46,7 +46,9 @@ cargo run -p player -- --preview \
 cargo run -p player -- --validate
 ```
 
-The default clock now uses the ANSI bitmap renderer. Set `renderer = "native"`
+The default clock uses the ANSI renderer with ASCII `#` character-art glyphs.
+Choose `glyphs = "ascii"`, `"blocks"`, or `"segments"` alongside `renderer = "ansi"`
+in the playlist, or override the library with `--glyphs`. Set `renderer = "native"`
 on a playlist entry to use its original Slint interface, or override every entry
 with `cargo run -p player -- --renderer native`.
 

@@ -102,6 +102,7 @@ name = "ansi-renderer"
 version = "0.1.0"
 dependencies = [
  "font8x8",
+ "serde",
  "thiserror 2.0.21",
  "vte",
 ]
@@ -3630,6 +3631,7 @@ version = "0.1.0"
 name = "screen-clock"
 version = "0.1.0"
 dependencies = [
+ "ansi-renderer",
  "chrono",
  "screen-api",
  "serde",

@@ -1,5 +1,6 @@
 use std::{fs, path::Path};
 
+use ansi_renderer::GlyphSet;
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, de::DeserializeOwned};
 
@@ -43,6 +44,8 @@ pub struct ScreenEntry {
     pub duration_seconds: u64,
     #[serde(default)]
     pub renderer: Renderer,
+    #[serde(default)]
+    pub glyphs: GlyphSet,
     #[serde(default)]
     pub settings: toml::Table,
 }
@@ -145,6 +148,21 @@ mod tests {
         let config: PlaylistConfig =
             toml::from_str("[[screens]]\nmodule='clock'\nduration_seconds=10").unwrap();
         assert_eq!(config.screens[0].renderer, Renderer::Native);
+    }
+
+    #[test]
+    fn glyphs_default_to_ascii() {
+        let config: PlaylistConfig =
+            toml::from_str("[[screens]]\nmodule='clock'\nduration_seconds=10\nrenderer='ansi'")
+                .unwrap();
+        assert_eq!(config.screens[0].glyphs, GlyphSet::Ascii);
+    }
+
+    #[test]
+    fn unknown_glyph_library_is_rejected() {
+        assert!(toml::from_str::<PlaylistConfig>(
+            "[[screens]]\nmodule='clock'\nduration_seconds=10\nrenderer='ansi'\nglyphs='unknown'"
+        ).is_err());
     }
 
     #[test]

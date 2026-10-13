@@ -2,10 +2,12 @@
 //! This is a screen renderer, not a full terminal emulator. See the crate README.
 
 mod color;
+mod glyphs;
 mod grid;
 mod raster;
 
 pub use color::Color;
+pub use glyphs::{Glyph, GlyphLibrary, GlyphSet};
 pub use grid::{Cell, Style};
 pub use raster::Frame;
 
@@ -17,6 +19,12 @@ const MAX_CELLS: usize = 262_144;
 pub enum RenderError {
     #[error("grid dimensions must be nonzero and contain at most {MAX_CELLS} cells")]
     InvalidDimensions,
+    #[error(
+        "glyphs must have 1 to 64 equally-sized rows, 1 to 64 characters wide, with no control characters"
+    )]
+    InvalidGlyph,
+    #[error("unknown glyph set '{0}'; choose ascii, blocks, or segments")]
+    UnknownGlyphSet(String),
 }
 
 /// Stateful ANSI parser. `feed` accepts partial sequences across calls.

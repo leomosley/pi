@@ -26,7 +26,7 @@ The `ansi-renderer` crate turns ANSI strings into a bounded grid of 8×8 bitmap
 cells and opaque RGBA pixels. It has no Slint dependency and can be reused in
 other applications. See [its API and supported sequences](../crates/ansi-renderer/README.md).
 
-A screen can implement `ansi_frame(columns, rows) -> String`, then use the
+A screen can implement `ansi_frame(columns, rows, glyphs: &GlyphLibrary) -> String`, then use the
 player's `AnsiSurface` to parse, cache, and present that frame. The clock is the
 reference implementation. ANSI screens use the shared image view and do not
 need their own Slint component. Register their Rust state and ANSI frame call
@@ -35,6 +35,12 @@ in `registry.rs` as with the clock.
 Select `renderer = "ansi"` or `"native"` per playlist entry. A screen offering
 both may use either; future ANSI-only modules should reject native mode at
 configuration validation. ANSI itself does not limit the module's Rust logic.
+
+Select the ANSI character-art library alongside it with `glyphs = "ascii"`,
+`"blocks"`, or `"segments"`. `GlyphLibrary::preset` creates a reusable library;
+`GlyphLibrary::insert` registers custom rectangular character-art glyphs. A
+screen can use the selected library to compose labels, digits, or custom symbols,
+or emit ordinary ANSI text directly without using character art.
 
 ## Lifecycle
 

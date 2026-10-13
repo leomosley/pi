@@ -38,3 +38,12 @@ fn rejects_conflicting_display_modes() {
         .unwrap();
     assert!(!output.status.success());
 }
+
+#[test]
+fn rejects_unknown_glyph_library() {
+    let output = player()
+        .args(["--validate", "--glyphs", "unknown"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+}

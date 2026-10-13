@@ -1,7 +1,10 @@
 {
   "name": "@pi-display/clock",
   "private": true,
-  "dependencies": { "@pi-display/screen-api": "workspace:*" },
+  "dependencies": {
+    "@pi-display/screen-api": "workspace:*",
+    "@pi-display/ansi-renderer": "workspace:*"
+  },
   "scripts": {
     "build": "cargo build -p screen-clock --locked",
     "test": "cargo test -p screen-clock --locked",

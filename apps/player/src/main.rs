@@ -5,6 +5,7 @@ mod registry;
 
 use std::{cell::RefCell, path::PathBuf, process::ExitCode, rc::Rc, time::Instant};
 
+use ansi_renderer::GlyphSet;
 use anyhow::Result;
 use clap::Parser;
 use screen_api::Screen;
@@ -32,6 +33,9 @@ struct Args {
     /// Override the renderer for all playlist entries.
     #[arg(long, value_enum)]
     renderer: Option<Renderer>,
+    /// ANSI character-art library: ascii, blocks, or segments. Overrides playlist choices.
+    #[arg(long)]
+    glyphs: Option<GlyphSet>,
     /// Validate configuration and registered screens without opening a window.
     #[arg(long)]
     validate: bool,
@@ -117,6 +121,11 @@ fn main() -> Result<ExitCode> {
     if let Some(renderer) = args.renderer {
         for entry in &mut config.screens {
             entry.renderer = renderer;
+        }
+    }
+    if let Some(glyphs) = args.glyphs {
+        for entry in &mut config.screens {
+            entry.glyphs = glyphs;
         }
     }
     let state = Rc::new(RefCell::new(PlayerState::new(&config, &display)?));
