@@ -1,0 +1,11 @@
+[[screens]]
+module = "portfolio"
+duration_seconds = 30
+renderer = "ansi"
+glyphs = "ascii"
+
+[screens.settings]
+refresh_seconds = 60
+key_env = "TRADING_212_KEY_ID"
+secret_env = "TRADING_212_SECRET"
+env_file = "screens/portfolio/.env"

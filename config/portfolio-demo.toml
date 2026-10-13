@@ -1,0 +1,9 @@
+# Offline sample data, never your account value.
+[[screens]]
+module = "portfolio"
+duration_seconds = 30
+renderer = "ansi"
+glyphs = "ascii"
+
+[screens.settings]
+demo = true

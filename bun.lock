@@ -13,6 +13,7 @@
       "dependencies": {
         "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/clock": "workspace:*",
+        "@pi-display/portfolio": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
         "@pi-display/usage": "workspace:*",
       },
@@ -25,6 +26,13 @@
     },
     "screens/clock": {
       "name": "@pi-display/clock",
+      "dependencies": {
+        "@pi-display/ansi-renderer": "workspace:*",
+        "@pi-display/screen-api": "workspace:*",
+      },
+    },
+    "screens/portfolio": {
+      "name": "@pi-display/portfolio",
       "dependencies": {
         "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
@@ -43,6 +51,8 @@
     "@pi-display/clock": ["@pi-display/clock@workspace:screens/clock"],
 
     "@pi-display/player": ["@pi-display/player@workspace:apps/player"],
+
+    "@pi-display/portfolio": ["@pi-display/portfolio@workspace:screens/portfolio"],
 
     "@pi-display/screen-api": ["@pi-display/screen-api@workspace:crates/screen-api"],
 

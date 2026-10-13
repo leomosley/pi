@@ -62,6 +62,11 @@ percentage-used bars. It fetches a user-owned endpoint in the background;
 on the Pi. See
 [usage screen setup](docs/usage-screen.md) for authentication and offline previews.
 
+The Trading 212 portfolio screen displays a single account value, fetched
+directly from the live account-summary API with a read-only key and secret.
+See [portfolio setup](docs/portfolio-screen.md). An offline sample is available
+in `config/portfolio-demo.toml`.
+
 ANSI digits roll when they change, without adding another clock element.
 Set `transition_ms = 320` in the screen settings to control the duration, or
 `0` to disable it. Separators and unchanged digits remain still.

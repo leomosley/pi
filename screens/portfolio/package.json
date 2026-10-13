@@ -1,0 +1,13 @@
+{
+  "name": "@pi-display/portfolio",
+  "private": true,
+  "dependencies": {
+    "@pi-display/screen-api": "workspace:*",
+    "@pi-display/ansi-renderer": "workspace:*"
+  },
+  "scripts": {
+    "build": "cargo build -p screen-portfolio --locked",
+    "test": "cargo test -p screen-portfolio --locked",
+    "lint": "cargo clippy -p screen-portfolio --all-targets --all-features --locked -- -D warnings"
+  }
+}

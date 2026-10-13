@@ -14,7 +14,12 @@
         "XAUTHORITY",
         "DBUS_SESSION_BUS_ADDRESS",
         "SLINT_BACKEND",
-        "WINIT_UNIX_BACKEND"
+        "WINIT_UNIX_BACKEND",
+        "TRADING212_API_KEY",
+        "TRADING212_API_SECRET",
+        "TRADING_212_KEY_ID",
+        "TRADING_212_SECRET",
+        "PI_USAGE_RELAY_KEY"
       ]
     }
   }

@@ -17,3 +17,15 @@ renderer = "ansi"
 [screens.settings]
 endpoint = "http://127.0.0.1:8787/usage"
 refresh_seconds = 60
+
+[[screens]]
+module = "portfolio"
+duration_seconds = 15
+renderer = "ansi"
+glyphs = "ascii"
+
+[screens.settings]
+refresh_seconds = 60
+key_env = "TRADING_212_KEY_ID"
+secret_env = "TRADING_212_SECRET"
+env_file = "screens/portfolio/.env"

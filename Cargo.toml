@@ -1,5 +1,5 @@
 [workspace]
-members = ["apps/player", "crates/screen-api", "crates/ansi-renderer", "screens/clock", "screens/usage"]
+members = ["apps/player", "crates/screen-api", "crates/ansi-renderer", "screens/clock", "screens/usage", "screens/portfolio"]
 resolver = "2"
 
 [workspace.package]
@@ -16,7 +16,7 @@ font8x8 = "0.3"
 png = "0.18"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls-native-roots"] }
 slint = { version = "=1.18.1", default-features = false, features = ["std", "backend-winit", "renderer-software", "compat-1-2"] }
 slint-build = "=1.18.1"
 thiserror = "2"
@@ -26,6 +26,7 @@ ansi-renderer = { path = "crates/ansi-renderer" }
 screen-api = { path = "crates/screen-api" }
 screen-clock = { path = "screens/clock" }
 screen-usage = { path = "screens/usage" }
+screen-portfolio = { path = "screens/portfolio" }
 
 [workspace.lints.rust]
 # Slint's generated vtable macros allow their own unsafe internals. Deny unsafe

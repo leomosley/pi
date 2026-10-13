@@ -94,6 +94,56 @@ fn usage_screen_also_supports_native_bars() {
 
 #[test]
 #[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn portfolio_ascii_frame_matches_native_window_pixels() {
+    let (info, pixels) = capture(
+        "portfolio",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--playlist",
+            "config/portfolio-demo.toml",
+        ],
+    );
+    assert_eq!((info.width, info.height), (480, 368));
+    let screen = screen_portfolio::PortfolioScreen::new(screen_portfolio::PortfolioSettings {
+        demo: true,
+        ..Default::default()
+    })
+    .unwrap();
+    let glyphs = screen_portfolio::portfolio_glyphs(ansi_renderer::GlyphLibrary::preset(
+        ansi_renderer::GlyphSet::Ascii,
+    ))
+    .unwrap();
+    let mut terminal = ansi_renderer::Terminal::new(60, 40).unwrap();
+    terminal.feed(screen.ansi_frame(60, 40, &glyphs).as_bytes());
+    assert!(pixels[..480 * 320 * 4] == terminal.rasterize().pixels);
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn portfolio_native_amount_is_visible() {
+    let (_, pixels) = capture(
+        "portfolio-native",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--playlist",
+            "config/portfolio-demo.toml",
+            "--renderer",
+            "native",
+        ],
+    );
+    assert!(
+        pixels[..480 * 320 * 4]
+            .chunks_exact(4)
+            .filter(|p| p[..3].iter().all(|&v| v > 200))
+            .count()
+            > 500
+    );
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
 fn scale_two_preserves_physical_target_dimensions() {
     let (info, _) = capture(
         "scale2",

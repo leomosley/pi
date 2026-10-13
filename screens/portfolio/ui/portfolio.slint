@@ -1,0 +1,37 @@
+export component PortfolioView inherits Rectangle {
+    in property <string> amount;
+    in property <int> amount-length: 10;
+    in property <string> currency;
+    in property <string> message;
+    background: #000;
+    Text {
+        y: parent.height / 2 - 72px;
+        height: 28px;
+        width: parent.width;
+        text: "Trading 212  " + root.currency;
+        color: #aaa;
+        font-family: "DejaVu Sans Mono";
+        font-size: 16px;
+        horizontal-alignment: center;
+    }
+    Text {
+        width: parent.width;
+        height: parent.height;
+        text: root.amount;
+        color: #fff;
+        font-family: "DejaVu Sans Mono";
+        font-size: min((root.width - 32px) / max(6, root.amount-length), root.height / 4);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    Text {
+        y: parent.height - 40px;
+        height: 32px;
+        width: parent.width;
+        text: root.message;
+        color: #aaa;
+        font-size: 12px;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+    }
+}

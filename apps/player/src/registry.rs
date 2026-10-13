@@ -2,6 +2,7 @@ use ansi_renderer::{CELL_HEIGHT, CELL_WIDTH, GlyphLibrary, GlyphSet, Terminal};
 use anyhow::{Context, Result, bail};
 use screen_api::Screen;
 use screen_clock::{ClockScreen, ClockSettings};
+use screen_portfolio::{PortfolioScreen, PortfolioSettings, portfolio_glyphs};
 use screen_usage::{UsageScreen, UsageSettings};
 
 use crate::{
@@ -47,6 +48,10 @@ impl AnsiSurface {
 }
 
 pub enum ScreenInstance {
+    Portfolio {
+        screen: PortfolioScreen,
+        ansi: Option<AnsiSurface>,
+    },
     Usage {
         screen: UsageScreen,
         ansi: Option<AnsiSurface>,
@@ -92,13 +97,34 @@ impl ScreenInstance {
                     ansi,
                 })
             }
-            module => bail!("unknown screen module '{module}'; registered modules: clock, usage"),
+            "portfolio" => {
+                let settings: PortfolioSettings = entry
+                    .settings
+                    .clone()
+                    .try_into()
+                    .context("invalid portfolio settings")?;
+                let ansi = if entry.renderer == Renderer::Ansi {
+                    let mut surface = AnsiSurface::new(display, entry.glyphs)?;
+                    surface.glyphs = portfolio_glyphs(surface.glyphs)?;
+                    Some(surface)
+                } else {
+                    None
+                };
+                Ok(Self::Portfolio {
+                    screen: PortfolioScreen::new(settings)?,
+                    ansi,
+                })
+            }
+            module => bail!(
+                "unknown screen module '{module}'; registered modules: clock, usage, portfolio"
+            ),
         }
     }
 
     pub fn render(&mut self, window: &PlayerWindow) {
         match self {
             Self::Clock { screen, ansi } => {
+                window.set_portfolio_mode(false);
                 window.set_usage_mode(false);
                 window.set_ansi_mode(ansi.is_some());
                 if let Some(surface) = ansi {
@@ -113,6 +139,7 @@ impl ScreenInstance {
                 }
             }
             Self::Usage { screen, ansi } => {
+                window.set_portfolio_mode(false);
                 window.set_usage_mode(true);
                 window.set_ansi_mode(ansi.is_some());
                 if let Some(surface) = ansi {
@@ -127,6 +154,24 @@ impl ScreenInstance {
                     window.set_usage_message(screen.message().into());
                 }
             }
+            Self::Portfolio { screen, ansi } => {
+                window.set_usage_mode(false);
+                window.set_portfolio_mode(true);
+                window.set_ansi_mode(ansi.is_some());
+                if let Some(surface) = ansi {
+                    let frame = screen.ansi_frame(
+                        surface.terminal.columns(),
+                        surface.terminal.rows(),
+                        &surface.glyphs,
+                    );
+                    window.set_ansi_frame(surface.render(&frame));
+                } else {
+                    window.set_portfolio_amount(screen.amount().into());
+                    window.set_portfolio_amount_length(screen.amount().len() as i32);
+                    window.set_portfolio_currency(screen.currency().into());
+                    window.set_portfolio_message(screen.message().into());
+                }
+            }
         }
     }
 }
@@ -136,6 +181,7 @@ impl Screen for ScreenInstance {
         match self {
             Self::Clock { screen, .. } => screen.activate(),
             Self::Usage { screen, .. } => screen.activate(),
+            Self::Portfolio { screen, .. } => screen.activate(),
         }
     }
 
@@ -143,6 +189,7 @@ impl Screen for ScreenInstance {
         match self {
             Self::Clock { screen, .. } => screen.tick(),
             Self::Usage { screen, .. } => screen.tick(),
+            Self::Portfolio { screen, .. } => screen.tick(),
         }
     }
 
@@ -150,6 +197,7 @@ impl Screen for ScreenInstance {
         match self {
             Self::Clock { screen, .. } => screen.deactivate(),
             Self::Usage { screen, .. } => screen.deactivate(),
+            Self::Portfolio { screen, .. } => screen.deactivate(),
         }
     }
 }
