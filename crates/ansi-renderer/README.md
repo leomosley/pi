@@ -16,6 +16,9 @@ let frame = screen.rasterize(); // 480 × 320 opaque RGBA pixels
 Cells are 8×8 physical pixels. Glyphs have no anti-aliasing. Integer enlargement
 with nearest-neighbour sampling preserves their pixels.
 
+The bitmap font also renders all 256 Unicode Braille patterns, the horizontal
+box-drawing rule, and the middle dot, supporting r6fetch's coloured rank art.
+
 ## Character-art glyph libraries
 
 The rasterizer's 8×8 font draws individual terminal characters. `GlyphLibrary`

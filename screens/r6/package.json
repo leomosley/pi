@@ -1,0 +1,14 @@
+{
+  "name": "@pi-display/r6",
+  "private": true,
+  "dependencies": {
+    "@pi-display/screen-api": "workspace:*",
+    "@pi-display/screen-widgets": "workspace:*",
+    "@pi-display/ansi-renderer": "workspace:*"
+  },
+  "scripts": {
+    "build": "cargo build -p screen-r6 --locked",
+    "test": "cargo test -p screen-r6 --locked",
+    "lint": "cargo clippy -p screen-r6 --all-targets --all-features --locked -- -D warnings"
+  }
+}

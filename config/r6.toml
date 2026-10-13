@@ -1,0 +1,9 @@
+[[screens]]
+module = "r6"
+duration_seconds = 30
+renderer = "ansi"
+
+[screens.settings]
+platform = "pc"
+username = "mosly"
+refresh_seconds = 300

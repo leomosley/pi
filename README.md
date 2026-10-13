@@ -67,6 +67,9 @@ directly from the live account-summary API with a read-only key and secret.
 See [portfolio setup](docs/portfolio-screen.md). An offline sample is available
 in `config/portfolio-demo.toml`.
 
+The `r6` screen shows your r6fetch rank emblem, RP, K/D, and other stats,
+fetched directly from `r6fetch.cc/pc/mosly`. See [R6 screen setup](docs/r6-screen.md).
+
 ANSI digits roll when they change, without adding another clock element.
 Set `transition_ms = 320` in the screen settings to control the duration, or
 `0` to disable it. Separators and unchanged digits remain still.

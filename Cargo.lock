@@ -3388,6 +3388,7 @@ dependencies = [
  "screen-api",
  "screen-clock",
  "screen-portfolio",
+ "screen-r6",
  "screen-usage",
  "serde",
  "slint",
@@ -4036,6 +4037,18 @@ dependencies = [
  "screen-widgets",
  "serde",
  "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "screen-r6"
+version = "0.1.0"
+dependencies = [
+ "ansi-renderer",
+ "reqwest",
+ "screen-api",
+ "screen-widgets",
+ "serde",
  "thiserror 2.0.21",
 ]
 

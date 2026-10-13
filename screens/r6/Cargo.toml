@@ -1,0 +1,17 @@
+[package]
+name = "screen-r6"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+screen-api.workspace = true
+screen-widgets.workspace = true
+ansi-renderer.workspace = true
+serde.workspace = true
+reqwest.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

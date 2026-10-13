@@ -11,6 +11,28 @@ pub struct Frame {
 
 fn glyph(character: char) -> [u8; 8] {
     match character {
+        '\u{2800}'..='\u{28ff}' => {
+            let dots = character as u32 - 0x2800;
+            let mut bitmap = [0u8; 8];
+            for (bit, x, y) in [
+                (0, 1, 0),
+                (1, 1, 2),
+                (2, 1, 4),
+                (3, 5, 0),
+                (4, 5, 2),
+                (5, 5, 4),
+                (6, 1, 6),
+                (7, 5, 6),
+            ] {
+                if dots & (1 << bit) != 0 {
+                    bitmap[y] |= 3 << x;
+                    bitmap[y + 1] |= 3 << x;
+                }
+            }
+            bitmap
+        }
+        '─' => [0, 0, 0, 255, 0, 0, 0, 0],
+        '·' => [0, 0, 0, 0x18, 0x18, 0, 0, 0],
         '█' => [255; 8],
         '▀' => [255, 255, 255, 255, 0, 0, 0, 0],
         '▄' => [0, 0, 0, 0, 255, 255, 255, 255],
@@ -51,5 +73,25 @@ pub(crate) fn render(grid: &Grid) -> Frame {
         width: width as u32,
         height: height as u32,
         pixels,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn empty_braille_has_no_pixels() {
+        assert_eq!(glyph('\u{2800}'), [0; 8]);
+    }
+    #[test]
+    fn braille_dot_order_matches_unicode() {
+        assert_eq!(glyph('⠁'), [6, 6, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(glyph('⠈'), [96, 96, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(glyph('⡀'), [0, 0, 0, 0, 0, 0, 6, 6]);
+        assert_eq!(glyph('⢀'), [0, 0, 0, 0, 0, 0, 96, 96]);
+    }
+    #[test]
+    fn full_braille_has_all_eight_dots() {
+        assert_eq!(glyph('⣿'), [102; 8]);
     }
 }

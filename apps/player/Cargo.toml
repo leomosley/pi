@@ -17,6 +17,7 @@ screen-api.workspace = true
 screen-clock.workspace = true
 screen-usage.workspace = true
 screen-portfolio.workspace = true
+screen-r6.workspace = true
 
 [build-dependencies]
 slint-build.workspace = true

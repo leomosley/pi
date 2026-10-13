@@ -29,3 +29,13 @@ refresh_seconds = 60
 key_env = "TRADING_212_KEY_ID"
 secret_env = "TRADING_212_SECRET"
 env_file = "screens/portfolio/.env"
+
+[[screens]]
+module = "r6"
+duration_seconds = 20
+renderer = "ansi"
+
+[screens.settings]
+platform = "pc"
+username = "mosly"
+refresh_seconds = 300

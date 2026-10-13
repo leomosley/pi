@@ -6,7 +6,8 @@
     "@pi-display/screen-api": "workspace:*",
     "@pi-display/clock": "workspace:*",
     "@pi-display/usage": "workspace:*",
-    "@pi-display/portfolio": "workspace:*"
+    "@pi-display/portfolio": "workspace:*",
+    "@pi-display/r6": "workspace:*"
   },
   "scripts": {
     "dev": "cargo run -p player -- --preview --display ../../profiles/displays/example-800x480.toml --playlist ../../config/playlist.toml",

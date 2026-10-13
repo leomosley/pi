@@ -3,6 +3,7 @@ use anyhow::{Context, Result, bail};
 use screen_api::Screen;
 use screen_clock::{ClockScreen, ClockSettings};
 use screen_portfolio::{PortfolioScreen, PortfolioSettings, portfolio_glyphs};
+use screen_r6::{R6Screen, R6Settings};
 use screen_usage::{UsageScreen, UsageSettings};
 
 use crate::{
@@ -48,6 +49,10 @@ impl AnsiSurface {
 }
 
 pub enum ScreenInstance {
+    R6 {
+        screen: R6Screen,
+        ansi: AnsiSurface,
+    },
     Portfolio {
         screen: PortfolioScreen,
         ansi: Option<AnsiSurface>,
@@ -115,14 +120,32 @@ impl ScreenInstance {
                     ansi,
                 })
             }
+            "r6" => {
+                let settings: R6Settings = entry
+                    .settings
+                    .clone()
+                    .try_into()
+                    .context("invalid r6 settings")?;
+                Ok(Self::R6 {
+                    screen: R6Screen::new(settings)?,
+                    ansi: AnsiSurface::new(display, entry.glyphs)?,
+                })
+            }
             module => bail!(
-                "unknown screen module '{module}'; registered modules: clock, usage, portfolio"
+                "unknown screen module '{module}'; registered modules: clock, usage, portfolio, r6"
             ),
         }
     }
 
     pub fn render(&mut self, window: &PlayerWindow) {
         match self {
+            Self::R6 { screen, ansi } => {
+                window.set_usage_mode(false);
+                window.set_portfolio_mode(false);
+                window.set_ansi_mode(true);
+                let frame = screen.ansi_frame(ansi.terminal.columns(), ansi.terminal.rows());
+                window.set_ansi_frame(ansi.render(&frame));
+            }
             Self::Clock { screen, ansi } => {
                 window.set_portfolio_mode(false);
                 window.set_usage_mode(false);
@@ -183,6 +206,7 @@ impl Screen for ScreenInstance {
             Self::Clock { screen, .. } => screen.activate(),
             Self::Usage { screen, .. } => screen.activate(),
             Self::Portfolio { screen, .. } => screen.activate(),
+            Self::R6 { screen, .. } => screen.activate(),
         }
     }
 
@@ -191,6 +215,7 @@ impl Screen for ScreenInstance {
             Self::Clock { screen, .. } => screen.tick(),
             Self::Usage { screen, .. } => screen.tick(),
             Self::Portfolio { screen, .. } => screen.tick(),
+            Self::R6 { screen, .. } => screen.tick(),
         }
     }
 
@@ -199,6 +224,7 @@ impl Screen for ScreenInstance {
             Self::Clock { screen, .. } => screen.deactivate(),
             Self::Usage { screen, .. } => screen.deactivate(),
             Self::Portfolio { screen, .. } => screen.deactivate(),
+            Self::R6 { screen, .. } => screen.deactivate(),
         }
     }
 }

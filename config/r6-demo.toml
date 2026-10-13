@@ -1,0 +1,8 @@
+# Recorded public profile snapshot, not current stats.
+[[screens]]
+module = "r6"
+duration_seconds = 30
+renderer = "ansi"
+
+[screens.settings]
+demo = true

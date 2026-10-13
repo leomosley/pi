@@ -14,6 +14,7 @@
         "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/clock": "workspace:*",
         "@pi-display/portfolio": "workspace:*",
+        "@pi-display/r6": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
         "@pi-display/usage": "workspace:*",
       },
@@ -42,6 +43,14 @@
         "@pi-display/screen-widgets": "workspace:*",
       },
     },
+    "screens/r6": {
+      "name": "@pi-display/r6",
+      "dependencies": {
+        "@pi-display/ansi-renderer": "workspace:*",
+        "@pi-display/screen-api": "workspace:*",
+        "@pi-display/screen-widgets": "workspace:*",
+      },
+    },
     "screens/usage": {
       "name": "@pi-display/usage",
       "dependencies": {
@@ -57,6 +66,8 @@
     "@pi-display/player": ["@pi-display/player@workspace:apps/player"],
 
     "@pi-display/portfolio": ["@pi-display/portfolio@workspace:screens/portfolio"],
+
+    "@pi-display/r6": ["@pi-display/r6@workspace:screens/r6"],
 
     "@pi-display/screen-api": ["@pi-display/screen-api@workspace:crates/screen-api"],
 

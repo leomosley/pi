@@ -144,6 +144,34 @@ fn portfolio_native_amount_is_visible() {
 
 #[test]
 #[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn r6_emblem_and_stats_match_native_pixels() {
+    let (info, pixels) = capture(
+        "r6",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--playlist",
+            "config/r6-demo.toml",
+        ],
+    );
+    assert_eq!((info.width, info.height), (480, 368));
+    let screen = screen_r6::R6Screen::new(screen_r6::R6Settings {
+        demo: true,
+        ..Default::default()
+    })
+    .unwrap();
+    let mut terminal = ansi_renderer::Terminal::new(60, 40).unwrap();
+    terminal.feed(screen.ansi_frame(60, 40).as_bytes());
+    assert!(pixels[..480 * 320 * 4] == terminal.rasterize().pixels);
+    assert!(
+        pixels[..480 * 320 * 4]
+            .chunks_exact(4)
+            .any(|p| p[2] > p[0] && p[0] > 80)
+    );
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
 fn scale_two_preserves_physical_target_dimensions() {
     let (info, _) = capture(
         "scale2",
