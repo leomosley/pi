@@ -2,8 +2,9 @@
 
 The `portfolio` screen displays one current account value with its currency
 symbol, such as `£8,543.80`. There is no brand heading, day/week/lifetime delta,
-or percentage return. A small eight-segment strip in the bottom-right drains
-until the next refresh. During a request, one segment moves along the strip.
+or percentage return. A small eight-segment strip in the bottom-right clears
+from left to right until the next refresh. During a request, one segment moves
+left to right along the strip.
 No numeric countdown is shown. Retry backoff uses its actual longer interval.
 The shared `screen-widgets` crate supplies this indicator for both ANSI and Slint.
 

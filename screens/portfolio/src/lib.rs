@@ -530,7 +530,7 @@ mod tests {
         let now = Instant::now();
         screen.refresh_interval = Duration::from_secs(300);
         screen.next_refresh = now + Duration::from_secs(150);
-        assert_eq!(screen.refresh_indicator_at(now).mask, 15);
+        assert_eq!(screen.refresh_indicator_at(now).mask, 240);
     }
 
     #[test]

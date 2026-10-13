@@ -3,7 +3,7 @@ use std::time::Duration;
 
 pub const REFRESH_SEGMENTS: usize = 8;
 
-/// A draining strip when waiting; one moving segment while refreshing.
+/// A strip clearing left to right when waiting; one segment moving left to right while refreshing.
 /// This is presentation only. The caller owns the request and refresh deadline.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RefreshIndicator {
@@ -19,7 +19,7 @@ impl RefreshIndicator {
         };
         let count = (fraction * REFRESH_SEGMENTS as f64).ceil() as usize;
         Self {
-            mask: ((1u16 << count) - 1) as u8,
+            mask: (((1u16 << count) - 1) << (REFRESH_SEGMENTS - count)) as u8,
         }
     }
 
@@ -66,7 +66,7 @@ mod tests {
     fn halfway_lights_four_segments() {
         assert_eq!(
             RefreshIndicator::waiting(Duration::from_secs(30), Duration::from_secs(60)).mask,
-            15
+            240
         );
     }
     #[test]
@@ -95,6 +95,24 @@ mod tests {
         assert_eq!(
             RefreshIndicator::refreshing(Duration::from_millis(1200)),
             RefreshIndicator::refreshing(Duration::ZERO)
+        );
+    }
+    #[test]
+    fn waiting_clears_leftmost_segment_first() {
+        let indicator = RefreshIndicator::waiting(Duration::from_secs(52), Duration::from_secs(60));
+        assert!(!indicator.is_lit(0));
+        assert!(indicator.is_lit(7));
+    }
+    #[test]
+    fn busy_segment_moves_from_left_to_right() {
+        assert_eq!(RefreshIndicator::refreshing(Duration::ZERO).mask, 1);
+        assert_eq!(
+            RefreshIndicator::refreshing(Duration::from_millis(150)).mask,
+            2
+        );
+        assert_eq!(
+            RefreshIndicator::refreshing(Duration::from_millis(1050)).mask,
+            128
         );
     }
     #[test]

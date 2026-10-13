@@ -4,8 +4,9 @@ Reusable presentation widgets for native Slint and ANSI screens.
 
 ## Refresh indicator
 
-An eight-segment strip drains as the next refresh approaches. While a request
-is in flight, one segment moves along the strip. No numeric countdown is shown.
+An eight-segment strip clears from left to right as the next refresh approaches.
+While a request is in flight, one segment moves left to right along the strip.
+No numeric countdown is shown.
 The widget owns no network requests or timers: screens supply the actual
 remaining time and retry interval, so backoff is represented honestly.
 
