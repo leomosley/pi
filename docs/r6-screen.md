@@ -4,10 +4,9 @@ The `r6` screen fetches `https://r6fetch.cc/pc/mosly` directly, with no API key.
 It preserves the public ANSI rank emblem's Braille characters and RGB colours,
 then lays out the stats beside it for the 480 × 320 display.
 When space permits, emblem rows are doubled to match the taller terminal-cell
-aspect ratio on the renderer's square 8 × 8 cells. It includes current
-rank and RP, season/all-time peak, K/D, win rate, kills, deaths, wins/losses,
-level, and headshot percentage when supplied. Optional stats at the bottom may
-be omitted on shorter displays.
+aspect ratio on the renderer's square 8 × 8 cells. Beside the emblem it shows
+only current RP, K/D, win rate, and headshot percentage. Rank names, peaks,
+level, and match totals are omitted. Missing RP or headshot data displays `--`.
 
 ```sh
 cargo run -p player -- --preview --playlist config/r6.toml \

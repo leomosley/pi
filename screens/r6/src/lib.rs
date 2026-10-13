@@ -64,6 +64,28 @@ pub struct Profile {
     stats: Vec<(&'static str, String)>,
 }
 
+impl Profile {
+    fn display_stats(&self) -> [(&'static str, &str); 4] {
+        let value = |label| {
+            self.stats
+                .iter()
+                .find(|(name, _)| *name == label)
+                .map_or("--", |(_, value)| value.as_str())
+        };
+        let rp = value("Current Rank")
+            .split('/')
+            .map(str::trim)
+            .find(|part| part.ends_with(" RP"))
+            .map_or("--", |part| part.trim_end_matches(" RP"));
+        [
+            ("RP", rp),
+            ("K/D", value("K/D")),
+            ("Win rate", value("Win Rate")),
+            ("Headshot", value("Headshot %")),
+        ]
+    }
+}
+
 fn is_braille(ch: char) -> bool {
     ('\u{2800}'..='\u{28ff}').contains(&ch)
 }
@@ -237,8 +259,6 @@ impl R6Screen {
             );
             return output;
         }
-        let header = format!("{} @ {}", self.settings.username, self.settings.platform);
-        text_at(&mut output, &header, 2, 2, columns - 4, false);
         if let Some(profile) = &self.profile {
             // r6fetch targets tall terminal cells. Double emblem rows when they
             // fit, preserving its aspect ratio on our square 8x8 bitmap grid.
@@ -263,25 +283,11 @@ impl R6Screen {
             }
             let x = 2 + profile.art[0].len() + 3;
             let width = columns.saturating_sub(x + 2);
-            let mut y = 5;
-            for (label, value) in &profile.stats {
-                if y + 2 >= rows - 3 {
-                    break;
-                }
+            let mut y = rows.saturating_sub(20) / 2;
+            for (label, value) in profile.display_stats() {
                 text_at(&mut output, label, x, y, width, true);
-                let chars: Vec<_> = value.chars().collect();
-                for chunk in chars.chunks(width).take(2) {
-                    y += 1;
-                    text_at(
-                        &mut output,
-                        &chunk.iter().collect::<String>(),
-                        x,
-                        y,
-                        width,
-                        false,
-                    );
-                }
-                y += 2;
+                text_at(&mut output, value, x, y + 1, width, false);
+                y += 5;
             }
         }
         if !self.message.is_empty() {
@@ -486,9 +492,7 @@ mod tests {
         })
         .unwrap();
         let frame = screen.ansi_frame(60, 40);
-        assert!(
-            frame.chars().any(is_braille) && frame.contains("K/D") && frame.contains("4,090 RP")
-        );
+        assert!(frame.chars().any(is_braille) && frame.contains("K/D") && frame.contains("4,090"));
     }
     #[test]
     fn small_grid_shows_help_instead_of_scrolling() {
@@ -498,5 +502,56 @@ mod tests {
         })
         .unwrap();
         assert!(screen.ansi_frame(30, 30).contains("R6 needs at least"));
+    }
+
+    #[test]
+    fn displays_only_the_four_requested_stats() {
+        let profile = parse_profile(FIXTURE).unwrap();
+        assert_eq!(
+            profile.display_stats(),
+            [
+                ("RP", "4,090"),
+                ("K/D", "0.82"),
+                ("Win rate", "47%"),
+                ("Headshot", "60.2%")
+            ]
+        );
+    }
+    #[test]
+    fn frame_omits_rank_name_and_extra_statistics() {
+        let screen = R6Screen::new(R6Settings {
+            demo: true,
+            ..Default::default()
+        })
+        .unwrap();
+        let frame = screen.ansi_frame(60, 40);
+        for removed in [
+            "Diamond",
+            "Level",
+            "Season Peak",
+            "All-Time Peak",
+            "Kills",
+            "Deaths",
+            "Wins / Losses",
+        ] {
+            assert!(!frame.contains(removed));
+        }
+    }
+    #[test]
+    fn missing_headshot_is_unknown_not_zero() {
+        let mut profile = parse_profile(FIXTURE).unwrap();
+        profile.stats.retain(|(label, _)| *label != "Headshot %");
+        assert_eq!(profile.display_stats()[3], ("Headshot", "--"));
+    }
+    #[test]
+    fn unranked_without_rp_is_unknown_not_fake_value() {
+        let mut profile = parse_profile(FIXTURE).unwrap();
+        profile
+            .stats
+            .iter_mut()
+            .find(|(label, _)| *label == "Current Rank")
+            .unwrap()
+            .1 = "Unranked".into();
+        assert_eq!(profile.display_stats()[0], ("RP", "--"));
     }
 }
