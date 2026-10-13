@@ -1,6 +1,7 @@
 [[screens]]
 module = "clock"
 duration_seconds = 30
+renderer = "ansi"
 
 [screens.settings]
 format = "24h"

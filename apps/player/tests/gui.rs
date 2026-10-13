@@ -55,7 +55,12 @@ fn scale_two_preserves_physical_target_dimensions() {
 fn clock_digits_remain_visible_after_automatic_format_transition() {
     let (info, pixels) = capture(
         "rotation",
-        &["--playlist", "apps/player/tests/fixtures/rotation.toml"],
+        &[
+            "--playlist",
+            "apps/player/tests/fixtures/rotation.toml",
+            "--renderer",
+            "native",
+        ],
     );
     assert_eq!(info.color_type, png::ColorType::Rgba);
     // The digits occupy the left half of the centered clock. A Slint 1.18.1
@@ -72,4 +77,44 @@ fn clock_digits_remain_visible_after_automatic_format_transition() {
         white_pixels > 1000,
         "clock digits missing; found {white_pixels} white pixels"
     );
+}
+
+#[test]
+#[ignore = "requires a Wayland or X11 desktop; run bun run smoke"]
+fn ansi_clock_is_rendered_as_exact_black_and_white_blocks() {
+    let (info, pixels) = capture(
+        "ansi",
+        &[
+            "--display",
+            "profiles/displays/dfrobot-fit0820-480x320.toml",
+            "--renderer",
+            "ansi",
+        ],
+    );
+    assert_eq!((info.width, info.height), (480, 368));
+    let content = &pixels[..480 * 320 * 4];
+    assert!(
+        content
+            .chunks_exact(4)
+            .all(|pixel| pixel == [0, 0, 0, 255] || pixel == [255; 4])
+    );
+    assert!(
+        content
+            .chunks_exact(4)
+            .filter(|pixel| *pixel == [255; 4])
+            .count()
+            > 1000
+    );
+    // Every clock block occupies one exact 8×8 physical-pixel cell.
+    for cell_y in 0..40 {
+        for cell_x in 0..60 {
+            let first = ((cell_y * 8) * 480 + cell_x * 8) * 4;
+            for y in 0..8 {
+                for x in 0..8 {
+                    let offset = ((cell_y * 8 + y) * 480 + cell_x * 8 + x) * 4;
+                    assert_eq!(&pixels[offset..offset + 4], &pixels[first..first + 4]);
+                }
+            }
+        }
+    }
 }

@@ -62,6 +62,36 @@ Validate a playlist without opening a GUI:
 cargo run -p player -- --validate --playlist config/playlist.toml
 ```
 
+## Renderer selection
+
+The bundled clock uses `renderer = "ansi"`. Its Rust code emits ANSI cursor and
+colour sequences plus block glyphs, which the custom crate rasterizes without
+anti-aliasing. On a 480 × 320 display the grid is 60 columns × 40 rows, with
+8×8 physical-pixel cells. This is a deliberately pixelated presentation, not a
+simulation of the TFT's pixel density or panel sharpness.
+
+```toml
+[[screens]]
+module = "clock"
+duration_seconds = 30
+renderer = "ansi" # or "native" for the original Slint clock
+
+[screens.settings]
+format = "24h"
+show_seconds = true
+```
+
+Override the entire playlist from the command line:
+
+```sh
+cargo run -p player -- --preview --renderer ansi \
+  --display profiles/displays/dfrobot-fit0820-480x320.toml
+```
+
+Each frame is cached until its ANSI source changes. Presentation uses nearest-
+neighbour image sampling. Choose display dimensions divisible by 8 for an exact
+cell-to-pixel match; other dimensions fit the smaller grid into the viewport.
+
 ## App-only screenshots
 
 Capture the native window without including other desktop applications:
@@ -75,8 +105,8 @@ The PNG includes the preview toolbar but excludes desktop window decorations.
 This needs a Wayland or X11 session; it is not a headless renderer.
 
 Run the opt-in native rendering checks with `bun run smoke`. These open and close
-three native windows, checking portrait size, 2× scaling, and clock-format
-rotation. Screenshots are saved to the system temporary directory, or to
+four native windows, checking portrait size, 2× scaling, native clock-format
+rotation, and exact ANSI bitmap pixels. Screenshots are saved to the system temporary directory, or to
 `PI_DISPLAY_TEST_ARTIFACT_DIR` when set.
 
 The player disables Slint 1.18.1's newer software-renderer text-layout path.

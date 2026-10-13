@@ -4,6 +4,8 @@ use chrono::{DateTime, Local, TimeZone};
 use screen_api::Screen;
 use serde::Deserialize;
 
+mod ansi;
+
 #[derive(Debug, Default, Deserialize, Clone, Copy)]
 pub enum ClockFormat {
     #[default]
@@ -46,6 +48,11 @@ impl ClockScreen {
 
     pub fn time(&self) -> &str {
         &self.time
+    }
+
+    /// ANSI frame for any renderer or terminal using the same character-grid size.
+    pub fn ansi_frame(&self, columns: usize, rows: usize) -> String {
+        ansi::clock_frame(&self.time, columns, rows)
     }
 }
 

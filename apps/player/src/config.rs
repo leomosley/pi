@@ -42,7 +42,17 @@ pub struct ScreenEntry {
     pub module: String,
     pub duration_seconds: u64,
     #[serde(default)]
+    pub renderer: Renderer,
+    #[serde(default)]
     pub settings: toml::Table,
+}
+
+#[derive(Debug, Default, Deserialize, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum Renderer {
+    #[default]
+    Native,
+    Ansi,
 }
 
 impl PlaylistConfig {
@@ -128,5 +138,22 @@ mod tests {
         let config: PlaylistConfig =
             toml::from_str("[[screens]]\nmodule='clock'\nduration_seconds=0").unwrap();
         assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn renderer_defaults_to_native_for_existing_playlists() {
+        let config: PlaylistConfig =
+            toml::from_str("[[screens]]\nmodule='clock'\nduration_seconds=10").unwrap();
+        assert_eq!(config.screens[0].renderer, Renderer::Native);
+    }
+
+    #[test]
+    fn unknown_renderer_is_rejected() {
+        assert!(
+            toml::from_str::<PlaylistConfig>(
+                "[[screens]]\nmodule='clock'\nduration_seconds=10\nrenderer='unknown'"
+            )
+            .is_err()
+        );
     }
 }

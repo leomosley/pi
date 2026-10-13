@@ -10,7 +10,7 @@ use clap::Parser;
 use screen_api::Screen;
 use slint::{ComponentHandle, Timer, TimerMode};
 
-use config::{DisplayProfile, PlaylistConfig, read_config};
+use config::{DisplayProfile, PlaylistConfig, Renderer, read_config};
 use playlist::Playlist;
 use registry::ScreenInstance;
 
@@ -29,6 +29,9 @@ struct Args {
     display: PathBuf,
     #[arg(long, default_value = "config/playlist.toml")]
     playlist: PathBuf,
+    /// Override the renderer for all playlist entries.
+    #[arg(long, value_enum)]
+    renderer: Option<Renderer>,
     /// Validate configuration and registered screens without opening a window.
     #[arg(long)]
     validate: bool,
@@ -45,12 +48,12 @@ struct PlayerState {
 }
 
 impl PlayerState {
-    fn new(config: &PlaylistConfig) -> Result<Self> {
+    fn new(config: &PlaylistConfig, display: &DisplayProfile) -> Result<Self> {
         let playlist = Playlist::new(config)?;
         let mut screens = config
             .screens
             .iter()
-            .map(ScreenInstance::build)
+            .map(|entry| ScreenInstance::build(entry, display))
             .collect::<Result<Vec<_>>>()?;
         screens[0].activate();
         Ok(Self {
@@ -83,7 +86,7 @@ impl PlayerState {
         self.screens[self.playlist.index()].tick();
     }
 
-    fn render(&self, window: &PlayerWindow) {
+    fn render(&mut self, window: &PlayerWindow) {
         let index = self.playlist.index();
         self.screens[index].render(window);
         window.set_paused(self.playlist.paused());
@@ -110,8 +113,13 @@ fn main() -> Result<ExitCode> {
     let args = Args::parse();
     let display: DisplayProfile = read_config(&args.display)?;
     display.validate()?;
-    let config: PlaylistConfig = read_config(&args.playlist)?;
-    let state = Rc::new(RefCell::new(PlayerState::new(&config)?));
+    let mut config: PlaylistConfig = read_config(&args.playlist)?;
+    if let Some(renderer) = args.renderer {
+        for entry in &mut config.screens {
+            entry.renderer = renderer;
+        }
+    }
+    let state = Rc::new(RefCell::new(PlayerState::new(&config, &display)?));
 
     if args.validate {
         println!(
@@ -130,7 +138,7 @@ fn main() -> Result<ExitCode> {
     window.set_viewport_width(display.width_px as f32 / display.scale_factor);
     window.set_viewport_height(display.height_px as f32 / display.scale_factor);
     window.window().set_fullscreen(args.fullscreen);
-    state.borrow().render(&window);
+    state.borrow_mut().render(&window);
 
     for forward in [false, true] {
         let state = Rc::clone(&state);

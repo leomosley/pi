@@ -6,6 +6,8 @@ export component PlayerWindow inherits Window {
     in property <length> viewport-width: 800px;
     in property <length> viewport-height: 480px;
     in property <string> clock-time;
+    in property <bool> ansi-mode;
+    in property <image> ansi-frame;
     in property <bool> paused;
     in property <string> status;
     callback previous();
@@ -17,10 +19,18 @@ export component PlayerWindow inherits Window {
     width: root.viewport-width;
     height: root.viewport-height + (root.preview ? 48px : 0px);
 
-    ClockView {
+    if !root.ansi-mode: ClockView {
         width: parent.width;
         height: root.preview ? root.viewport-height : parent.height;
         time: root.clock-time;
+    }
+
+    if root.ansi-mode: Image {
+        width: parent.width;
+        height: root.preview ? root.viewport-height : parent.height;
+        source: root.ansi-frame;
+        image-fit: contain;
+        image-rendering: pixelated;
     }
 
     if root.preview: PreviewControls {

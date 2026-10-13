@@ -20,6 +20,22 @@ the player's build script, while its Rust logic lives in an independent crate.
 The shared API handles behaviour; it does not pretend Slint has a generic
 runtime widget insertion API.
 
+## ANSI screens
+
+The `ansi-renderer` crate turns ANSI strings into a bounded grid of 8×8 bitmap
+cells and opaque RGBA pixels. It has no Slint dependency and can be reused in
+other applications. See [its API and supported sequences](../crates/ansi-renderer/README.md).
+
+A screen can implement `ansi_frame(columns, rows) -> String`, then use the
+player's `AnsiSurface` to parse, cache, and present that frame. The clock is the
+reference implementation. ANSI screens use the shared image view and do not
+need their own Slint component. Register their Rust state and ANSI frame call
+in `registry.rs` as with the clock.
+
+Select `renderer = "ansi"` or `"native"` per playlist entry. A screen offering
+both may use either; future ANSI-only modules should reject native mode at
+configuration validation. ANSI itself does not limit the module's Rust logic.
+
 ## Lifecycle
 
 - `activate`: prepare the visible screen and populate its initial state.

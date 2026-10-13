@@ -7,6 +7,7 @@ workspace tooling, Turborepo runs tasks, and Cargo compiles the application.
 
 - `apps/player`: native player and preview controls.
 - `crates/screen-api`: shared screen lifecycle.
+- `crates/ansi-renderer`: reusable ANSI cell grid, colours, and bitmap output.
 - `screens/clock`: clock logic and Slint layout.
 - `config`: playlists and per-screen settings.
 - `profiles/displays`: target resolution and UI scale.
@@ -44,6 +45,10 @@ cargo run -p player -- --preview \
 # Check configuration without needing a desktop session.
 cargo run -p player -- --validate
 ```
+
+The default clock now uses the ANSI bitmap renderer. Set `renderer = "native"`
+on a playlist entry to use its original Slint interface, or override every entry
+with `cargo run -p player -- --renderer native`.
 
 The clock uses the operating system's local timezone. Set `format = "12h"` or
 `"24h"` and `show_seconds = true` or `false` in `config/playlist.toml`.
