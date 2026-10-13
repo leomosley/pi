@@ -4,5 +4,6 @@ duration_seconds = 30
 renderer = "ansi"
 
 [screens.settings]
-endpoint = "http://127.0.0.1:8787/usage"
+endpoint = "https://api.mosly.dev/usage"
 refresh_seconds = 60
+token_env = "PI_USAGE_RELAY_KEY"

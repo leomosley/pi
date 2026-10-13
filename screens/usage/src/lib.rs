@@ -16,6 +16,7 @@ pub struct UsageSettings {
     pub refresh_seconds: u64,
     pub endpoint: String,
     /// Name of an environment variable holding the relay's bearer key.
+    #[serde(default)]
     pub token_env: Option<String>,
     /// Offline preview only. Does not load credentials or make requests.
     pub demo: bool,
@@ -25,8 +26,8 @@ impl Default for UsageSettings {
     fn default() -> Self {
         Self {
             refresh_seconds: 60,
-            endpoint: "http://127.0.0.1:8787/usage".into(),
-            token_env: None,
+            endpoint: "https://api.mosly.dev/usage".into(),
+            token_env: Some("PI_USAGE_RELAY_KEY".into()),
             demo: false,
         }
     }
@@ -294,6 +295,40 @@ mod tests {
         .unwrap()
     }
 
+    #[test]
+    fn defaults_to_authenticated_mosly_api() {
+        let settings = UsageSettings::default();
+        assert_eq!(settings.endpoint, "https://api.mosly.dev/usage");
+        assert_eq!(settings.token_env.as_deref(), Some("PI_USAGE_RELAY_KEY"));
+    }
+    #[test]
+    fn mock_configuration_does_not_require_a_key() {
+        let settings: UsageSettings = serde_json::from_value(json!({
+            "endpoint": "http://127.0.0.1:8787/usage"
+        }))
+        .unwrap();
+        assert!(settings.token_env.is_none());
+    }
+    #[test]
+    fn parses_mosly_api_metadata_without_changing_percentages() {
+        let bytes = br#"{
+            "five_hour_used_percent":37,
+            "weekly_used_percent":62,
+            "five_hour_reset_at":null,
+            "weekly_reset_at":null,
+            "plan_type":"plus",
+            "allowed":true,
+            "limit_reached":false,
+            "observed_at":"2026-10-13T19:00:00Z"
+        }"#;
+        assert_eq!(
+            parse_usage(bytes).unwrap(),
+            Usage {
+                five_hour: Some(37.0),
+                weekly: Some(62.0)
+            }
+        );
+    }
     #[test]
     fn parses_percent_used_without_inverting_to_remaining() {
         assert_eq!(

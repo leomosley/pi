@@ -1,0 +1,8 @@
+[[screens]]
+module = "usage"
+duration_seconds = 30
+renderer = "ansi"
+
+[screens.settings]
+endpoint = "http://127.0.0.1:8787/usage"
+refresh_seconds = 60

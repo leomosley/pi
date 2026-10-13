@@ -57,9 +57,9 @@ The clock uses the operating system's local timezone. Set `format = "12h"` or
 Configuration is read at startup; restart the player after editing it.
 
 The playlist also includes a Codex usage screen with labeled 5-hour and weekly
-percentage-used bars. It fetches a user-owned endpoint in the background;
-`bun run mock:usage` starts a local sample endpoint. No ChatGPT login is needed
-on the Pi. See
+percentage-used bars. It fetches `https://api.mosly.dev/usage` in the background
+using `PI_USAGE_RELAY_KEY`. Load `~/.config/mosly-api/pi.env` before starting the
+player. No ChatGPT login is needed on the Pi. See
 [usage screen setup](docs/usage-screen.md) for authentication and offline previews.
 
 The Trading 212 portfolio screen displays a single account value, fetched

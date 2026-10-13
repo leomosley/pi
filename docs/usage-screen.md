@@ -2,7 +2,31 @@
 
 Two bars show **percentage used**, labeled `5-hour` and `Weekly`. The Pi reads
 a user-owned endpoint. It does not run OpenCode or Codex, load their login files,
-contact ChatGPT, or refresh OAuth tokens. You provide the real relay separately.
+contact ChatGPT, or refresh OAuth tokens.
+
+## Live usage
+
+The default playlist and `config/usage.toml` use `https://api.mosly.dev/usage`.
+The API project at `../api.mosly.dev` publishes sanitized Codex usage and creates
+a read-only key in `~/.config/mosly-api/pi.env`. Load it before starting the player:
+
+```sh
+set -a
+. ~/.config/mosly-api/pi.env
+set +a
+cargo run -p player -- --preview --playlist config/usage.toml \
+  --display profiles/displays/dfrobot-fit0820-480x320.toml
+```
+
+For the Pi service, copy that file privately and load it with `EnvironmentFile`.
+The publisher must be running; missing or expired snapshots return HTTP 503
+and the screen displays `Usage unavailable` instead of stale percentages.
+
+Check the live HTTP path without opening a window after loading the key:
+
+```sh
+cargo run -p screen-usage --example check-usage
+```
 
 ## Local mock
 
@@ -15,7 +39,7 @@ bun run mock:usage
 Then start the screen in another:
 
 ```sh
-cargo run -p player -- --preview --playlist config/usage.toml \
+cargo run -p player -- --preview --playlist config/usage-mock.toml \
   --display profiles/displays/dfrobot-fit0820-480x320.toml
 ```
 
@@ -24,7 +48,6 @@ The mock binds only to `127.0.0.1:8787` and serves `GET /usage`. It reads
 the next refresh. These are sample values, not actual account usage. The mock
 is development tooling, not a service required on the Pi.
 
-The default playlist rotates between the clock and this endpoint-backed screen.
 `config/usage-demo.toml` remains an offline visual fixture that makes no requests.
 
 ## Endpoint contract
@@ -53,7 +76,7 @@ duration_seconds = 15
 renderer = "ansi"
 
 [screens.settings]
-endpoint = "https://your-relay.example/usage"
+endpoint = "https://api.mosly.dev/usage"
 refresh_seconds = 60
 token_env = "PI_USAGE_RELAY_KEY"
 ```
@@ -74,9 +97,3 @@ start requests. Validation does not read keys or start network requests.
 
 The ANSI renderer uses `#` fill and `-` empty cells. `--renderer native` selects
 plain Slint bars. Clock glyph presets do not affect the usage bars.
-
-With the local mock running, check the HTTP path without opening a window:
-
-```sh
-cargo run -p screen-usage --example check-usage
-```
