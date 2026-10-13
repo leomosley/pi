@@ -11,9 +11,13 @@
     "apps/player": {
       "name": "@pi-display/player",
       "dependencies": {
+        "@pi-display/ansi-renderer": "workspace:*",
         "@pi-display/clock": "workspace:*",
         "@pi-display/screen-api": "workspace:*",
       },
+    },
+    "crates/ansi-renderer": {
+      "name": "@pi-display/ansi-renderer",
     },
     "crates/screen-api": {
       "name": "@pi-display/screen-api",
@@ -26,6 +30,8 @@
     },
   },
   "packages": {
+    "@pi-display/ansi-renderer": ["@pi-display/ansi-renderer@workspace:crates/ansi-renderer"],
+
     "@pi-display/clock": ["@pi-display/clock@workspace:screens/clock"],
 
     "@pi-display/player": ["@pi-display/player@workspace:apps/player"],

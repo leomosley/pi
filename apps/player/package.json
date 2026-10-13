@@ -2,6 +2,7 @@
   "name": "@pi-display/player",
   "private": true,
   "dependencies": {
+    "@pi-display/ansi-renderer": "workspace:*",
     "@pi-display/screen-api": "workspace:*",
     "@pi-display/clock": "workspace:*"
   },

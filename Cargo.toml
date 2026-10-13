@@ -1,5 +1,5 @@
 [workspace]
-members = ["apps/player", "crates/screen-api", "screens/clock"]
+members = ["apps/player", "crates/screen-api", "crates/ansi-renderer", "screens/clock"]
 resolver = "2"
 
 [workspace.package]
@@ -12,12 +12,15 @@ publish = false
 anyhow = "1"
 chrono = "0.4"
 clap = { version = "4", features = ["derive"] }
+font8x8 = "0.3"
 png = "0.18"
 serde = { version = "1", features = ["derive"] }
 slint = { version = "=1.18.1", default-features = false, features = ["std", "backend-winit", "renderer-software", "compat-1-2"] }
 slint-build = "=1.18.1"
 thiserror = "2"
 toml = "0.9"
+vte = { version = "0.15", default-features = false }
+ansi-renderer = { path = "crates/ansi-renderer" }
 screen-api = { path = "crates/screen-api" }
 screen-clock = { path = "screens/clock" }
 

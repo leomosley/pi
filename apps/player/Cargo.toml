@@ -7,6 +7,7 @@ publish.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+ansi-renderer.workspace = true
 clap.workspace = true
 png.workspace = true
 serde.workspace = true

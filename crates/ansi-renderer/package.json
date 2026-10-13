@@ -1,0 +1,9 @@
+{
+  "name": "@pi-display/ansi-renderer",
+  "private": true,
+  "scripts": {
+    "build": "cargo build -p ansi-renderer --locked",
+    "test": "cargo test -p ansi-renderer --locked",
+    "lint": "cargo clippy -p ansi-renderer --all-targets --all-features --locked -- -D warnings"
+  }
+}
