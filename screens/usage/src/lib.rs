@@ -1,25 +1,22 @@
-//! Two Codex subscription usage bars. Network work never runs on the UI thread.
+//! Two subscription usage bars fed by a user-owned relay.
 
 use screen_api::Screen;
 use serde::Deserialize;
 use std::{
     fmt::Write,
-    fs,
     io::Read,
-    path::PathBuf,
     sync::mpsc::{self, Receiver},
     thread,
     time::{Duration, Instant},
 };
 
-const ENDPOINT: &str = "https://chatgpt.com/backend-api/wham/usage";
-
 #[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct UsageSettings {
     pub refresh_seconds: u64,
-    /// Optional local Codex auth.json or OpenCode auth.json. Never a token.
-    pub auth_file: Option<PathBuf>,
+    pub endpoint: String,
+    /// Name of an environment variable holding the relay's bearer key.
+    pub token_env: Option<String>,
     /// Offline preview only. Does not load credentials or make requests.
     pub demo: bool,
 }
@@ -28,7 +25,8 @@ impl Default for UsageSettings {
     fn default() -> Self {
         Self {
             refresh_seconds: 60,
-            auth_file: None,
+            endpoint: "http://127.0.0.1:8787/usage".into(),
+            token_env: None,
             demo: false,
         }
     }
@@ -38,8 +36,14 @@ impl Default for UsageSettings {
 pub enum UsageError {
     #[error("refresh_seconds must be between 30 and 3600")]
     InvalidRefresh,
-    #[error("Sign in with ChatGPT in OpenCode or Codex")]
+    #[error("Check usage endpoint key")]
     Authentication,
+    #[error(
+        "usage endpoint must be HTTPS, or HTTP on loopback, with no embedded credentials or fragment"
+    )]
+    InvalidEndpoint,
+    #[error("token_env must name an environment variable")]
+    InvalidTokenEnv,
     #[error("Usage unavailable")]
     Unavailable,
     #[error("Unsupported usage response")]
@@ -54,110 +58,74 @@ pub struct Usage {
 
 #[derive(Deserialize)]
 struct Payload {
-    rate_limit: Option<Limits>,
-}
-#[derive(Deserialize)]
-struct Limits {
-    primary_window: Option<Window>,
-    secondary_window: Option<Window>,
-}
-#[derive(Deserialize)]
-struct Window {
-    used_percent: f64,
-    limit_window_seconds: u64,
+    five_hour_used_percent: Option<f64>,
+    weekly_used_percent: Option<f64>,
 }
 
 pub fn parse_usage(bytes: &[u8]) -> Result<Usage, UsageError> {
     let payload: Payload =
         serde_json::from_slice(bytes).map_err(|_| UsageError::InvalidResponse)?;
-    let mut usage = Usage {
-        five_hour: None,
-        weekly: None,
-    };
-    if let Some(limits) = payload.rate_limit {
-        for window in [limits.primary_window, limits.secondary_window]
-            .into_iter()
-            .flatten()
-        {
-            if !window.used_percent.is_finite() || !(0.0..=100.0).contains(&window.used_percent) {
-                return Err(UsageError::InvalidResponse);
-            }
-            match window.limit_window_seconds {
-                18000 => usage.five_hour = Some(window.used_percent),
-                604800 => usage.weekly = Some(window.used_percent),
-                _ => {}
-            }
+    for percent in [payload.five_hour_used_percent, payload.weekly_used_percent]
+        .into_iter()
+        .flatten()
+    {
+        if !percent.is_finite() || !(0.0..=100.0).contains(&percent) {
+            return Err(UsageError::InvalidResponse);
         }
     }
-    Ok(usage)
-}
-
-// Deliberately no Debug implementation: tokens must never appear in diagnostics.
-struct Credentials {
-    access: String,
-    account: Option<String>,
-}
-
-fn parse_credentials(bytes: &[u8]) -> Result<Credentials, UsageError> {
-    let data: serde_json::Value =
-        serde_json::from_slice(bytes).map_err(|_| UsageError::Authentication)?;
-    let (access, account) = if let Some(tokens) = data.get("tokens") {
-        (tokens.get("access_token"), tokens.get("account_id"))
-    } else {
-        let openai = data.get("openai").ok_or(UsageError::Authentication)?;
-        if openai.get("type").and_then(|v| v.as_str()) != Some("oauth") {
-            return Err(UsageError::Authentication);
-        }
-        (openai.get("access"), openai.get("accountId"))
-    };
-    let access = access
-        .and_then(|v| v.as_str())
-        .filter(|s| !s.is_empty())
-        .ok_or(UsageError::Authentication)?
-        .to_owned();
-    Ok(Credentials {
-        access,
-        account: account.and_then(|v| v.as_str()).map(str::to_owned),
+    Ok(Usage {
+        five_hour: payload.five_hour_used_percent,
+        weekly: payload.weekly_used_percent,
     })
 }
 
-fn credentials(settings: &UsageSettings) -> Result<Credentials, UsageError> {
-    let paths = if let Some(path) = &settings.auth_file {
-        vec![path.clone()]
-    } else {
-        let home = PathBuf::from(std::env::var_os("HOME").ok_or(UsageError::Authentication)?);
-        let data = std::env::var_os("XDG_DATA_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| home.join(".local/share"));
-        let codex = std::env::var_os("CODEX_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| home.join(".codex"));
-        vec![data.join("opencode/auth.json"), codex.join("auth.json")]
-    };
-    for path in paths {
-        if let Ok(bytes) = fs::read(path)
-            && let Ok(credentials) = parse_credentials(&bytes)
-        {
-            return Ok(credentials);
-        }
+fn validate_endpoint(endpoint: &str) -> Result<(), UsageError> {
+    let url = reqwest::Url::parse(endpoint).map_err(|_| UsageError::InvalidEndpoint)?;
+    let loopback = url.host_str().is_some_and(|host| {
+        host == "localhost"
+            || host
+                .trim_matches(['[', ']'])
+                .parse::<std::net::IpAddr>()
+                .is_ok_and(|ip| ip.is_loopback())
+    });
+    if !(url.scheme() == "https" || (url.scheme() == "http" && loopback))
+        || url.host().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.fragment().is_some()
+    {
+        return Err(UsageError::InvalidEndpoint);
     }
-    Err(UsageError::Authentication)
+    Ok(())
 }
 
 fn fetch(settings: &UsageSettings) -> Result<Usage, UsageError> {
-    let auth = credentials(settings)?;
-    // Fixed HTTPS host, no redirects, no credential writes or token refresh races.
+    let token = settings
+        .token_env
+        .as_ref()
+        .map(|name| {
+            std::env::var(name)
+                .ok()
+                .filter(|value| !value.trim().is_empty())
+                .ok_or(UsageError::Authentication)
+        })
+        .transpose()?;
+    fetch_with_token(settings, token.as_deref())
+}
+
+fn fetch_with_token(settings: &UsageSettings, token: Option<&str>) -> Result<Usage, UsageError> {
+    validate_endpoint(&settings.endpoint)?;
+    // Never forward the relay key to a redirect destination or log response bodies.
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|_| UsageError::Unavailable)?;
     let mut request = client
-        .get(ENDPOINT)
-        .bearer_auth(&auth.access)
-        .header("User-Agent", "codex-cli");
-    if let Some(account) = auth.account {
-        request = request.header("ChatGPT-Account-Id", account);
+        .get(&settings.endpoint)
+        .header("User-Agent", "pi-display");
+    if let Some(token) = token {
+        request = request.bearer_auth(token);
     }
     let response = request.send().map_err(|_| UsageError::Unavailable)?;
     match response.status().as_u16() {
@@ -189,6 +157,15 @@ impl UsageScreen {
     pub fn new(settings: UsageSettings) -> Result<Self, UsageError> {
         if !(30..=3600).contains(&settings.refresh_seconds) {
             return Err(UsageError::InvalidRefresh);
+        }
+        validate_endpoint(&settings.endpoint)?;
+        if let Some(name) = &settings.token_env
+            && (name.is_empty()
+                || !name.chars().enumerate().all(|(index, ch)| {
+                    ch == '_' || ch.is_ascii_alphabetic() || (index > 0 && ch.is_ascii_digit())
+                }))
+        {
+            return Err(UsageError::InvalidTokenEnv);
         }
         let usage = settings.demo.then_some(Usage {
             five_hour: Some(37.0),
@@ -273,7 +250,7 @@ impl Screen for UsageScreen {
                     }
                     Err(UsageError::Authentication) => {
                         self.usage = None;
-                        self.message = "Sign in with ChatGPT in OpenCode or Codex";
+                        self.message = "Check usage endpoint key";
                     }
                     Err(_) => {
                         self.usage = None;
@@ -289,7 +266,7 @@ impl Screen for UsageScreen {
             let (sender, receiver) = mpsc::channel();
             let settings = self.settings.clone();
             match thread::Builder::new()
-                .name("codex-usage".into())
+                .name("usage-relay".into())
                 .spawn(move || {
                     let _ = sender.send(fetch(&settings));
                 }) {
@@ -311,10 +288,9 @@ mod tests {
     use serde_json::json;
 
     fn payload(primary: f64, secondary: f64) -> Vec<u8> {
-        serde_json::to_vec(&json!({"rate_limit": {
-            "primary_window": {"used_percent": primary, "limit_window_seconds": 18000},
-            "secondary_window": {"used_percent": secondary, "limit_window_seconds": 604800}
-        }}))
+        serde_json::to_vec(
+            &json!({"five_hour_used_percent": primary, "weekly_used_percent": secondary}),
+        )
         .unwrap()
     }
 
@@ -329,14 +305,14 @@ mod tests {
         );
     }
     #[test]
-    fn maps_windows_by_duration_not_position() {
-        let bytes = br#"{"rate_limit":{"secondary_window":{"used_percent":40,"limit_window_seconds":18000}}}"#;
+    fn accepts_a_single_available_window() {
+        let bytes = br#"{"five_hour_used_percent":40}"#;
         assert_eq!(parse_usage(bytes).unwrap().five_hour, Some(40.0));
     }
     #[test]
     fn absent_limits_are_unknown_not_zero() {
         assert_eq!(
-            parse_usage(br#"{"rate_limit":null}"#).unwrap(),
+            parse_usage(br#"{"five_hour_used_percent":null,"weekly_used_percent":null}"#).unwrap(),
             Usage {
                 five_hour: None,
                 weekly: None
@@ -344,9 +320,8 @@ mod tests {
         );
     }
     #[test]
-    fn unrelated_window_is_not_mislabeled() {
-        let bytes =
-            br#"{"rate_limit":{"primary_window":{"used_percent":10,"limit_window_seconds":3600}}}"#;
+    fn missing_window_is_unknown() {
+        let bytes = br#"{"weekly_used_percent":10}"#;
         assert_eq!(parse_usage(bytes).unwrap().five_hour, None);
     }
     #[test]
@@ -362,28 +337,120 @@ mod tests {
         assert!(parse_usage(b"not json").is_err());
     }
     #[test]
-    fn reads_codex_credentials() {
-        let auth =
-            parse_credentials(br#"{"tokens":{"access_token":"test","account_id":"workspace"}}"#)
-                .unwrap();
-        assert_eq!(auth.account.as_deref(), Some("workspace"));
+    fn accepts_https_endpoints() {
+        assert!(validate_endpoint("https://usage.example.com/usage").is_ok());
     }
     #[test]
-    fn reads_opencode_oauth_credentials() {
-        let auth = parse_credentials(
-            br#"{"openai":{"type":"oauth","access":"test","accountId":"workspace"}}"#,
+    fn rejects_plaintext_remote_endpoints() {
+        assert!(validate_endpoint("http://192.168.1.2/usage").is_err());
+    }
+    #[test]
+    fn rejects_embedded_credentials() {
+        assert!(validate_endpoint("https://secret@example.com/usage").is_err());
+    }
+    #[test]
+    fn accepts_loopback_http_for_mock() {
+        assert!(validate_endpoint("http://[::1]:8787/usage").is_ok());
+    }
+
+    fn mock_http(status: &str, body: &str, token: Option<&str>) -> Result<Usage, UsageError> {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}/usage", listener.local_addr().unwrap());
+        let status = status.to_owned();
+        let body = body.to_owned();
+        let expected_token = token.map(str::to_owned);
+        let handle = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .unwrap();
+            let mut request = Vec::new();
+            let mut buffer = [0; 1024];
+            while !request.windows(4).any(|w| w == b"\r\n\r\n") {
+                let count = stream.read(&mut buffer).unwrap();
+                assert!(count > 0);
+                request.extend_from_slice(&buffer[..count]);
+            }
+            let request = String::from_utf8(request).unwrap().to_lowercase();
+            assert!(request.starts_with("get /usage http/1.1"));
+            if let Some(token) = expected_token {
+                assert!(
+                    request.contains(&format!("authorization: bearer {}", token.to_lowercase()))
+                );
+            } else {
+                assert!(!request.contains("authorization:"));
+            }
+            write!(stream, "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\nLocation: https://example.invalid/redirect\r\n\r\n{body}", body.len()).unwrap();
+        });
+        let result = fetch_with_token(
+            &UsageSettings {
+                endpoint,
+                ..Default::default()
+            },
+            token,
+        );
+        handle.join().unwrap();
+        result
+    }
+
+    #[test]
+    fn fetches_relay_json_over_http() {
+        let usage = mock_http(
+            "200 OK",
+            r#"{"five_hour_used_percent":37,"weekly_used_percent":62}"#,
+            None,
         )
         .unwrap();
-        assert_eq!(auth.access, "test");
+        assert_eq!(
+            usage,
+            Usage {
+                five_hour: Some(37.0),
+                weekly: Some(62.0)
+            }
+        );
     }
     #[test]
-    fn rejects_api_key_auth() {
-        assert!(parse_credentials(br#"{"openai":{"type":"api","key":"test"}}"#).is_err());
+    fn sends_optional_bearer_key() {
+        assert!(
+            mock_http(
+                "200 OK",
+                r#"{"five_hour_used_percent":37}"#,
+                Some("test-only-key")
+            )
+            .is_ok()
+        );
     }
     #[test]
-    fn credential_errors_do_not_include_input() {
-        let err = parse_credentials(b"very-secret-token").err().unwrap();
-        assert!(!err.to_string().contains("very-secret-token"));
+    fn rejected_key_returns_sanitized_error() {
+        assert!(matches!(
+            mock_http("401 Unauthorized", "secret in response", None),
+            Err(UsageError::Authentication)
+        ));
+    }
+    #[test]
+    fn does_not_follow_redirects() {
+        assert!(matches!(
+            mock_http("302 Found", "", Some("test-only-key")),
+            Err(UsageError::Unavailable)
+        ));
+    }
+    #[test]
+    fn oversized_response_is_rejected() {
+        assert!(matches!(
+            mock_http("200 OK", &" ".repeat(65537), None),
+            Err(UsageError::InvalidResponse)
+        ));
+    }
+    #[test]
+    fn invalid_token_environment_name_is_rejected() {
+        assert!(
+            UsageScreen::new(UsageSettings {
+                token_env: Some("key=value".into()),
+                ..Default::default()
+            })
+            .is_err()
+        );
     }
     #[test]
     fn rejects_aggressive_refresh_interval() {

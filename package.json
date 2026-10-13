@@ -4,6 +4,7 @@
   "packageManager": "bun@1.4.3",
   "workspaces": ["apps/*", "crates/*", "screens/*"],
   "scripts": {
+    "mock:usage": "bun scripts/mock-usage.ts",
     "dev": "turbo run dev --filter=@pi-display/player",
     "build": "turbo run build --concurrency=1",
     "test": "turbo run test --concurrency=1",

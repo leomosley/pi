@@ -1,35 +1,50 @@
-# Codex usage screen
+# Usage screen
 
-Two bars show **percentage used**, labeled `5-hour` and `Weekly`. The default
-playlist rotates between the clock and usage screen. No reset countdown,
-account details, or additional dashboard elements appear.
+Two bars show **percentage used**, labeled `5-hour` and `Weekly`. The Pi reads
+a user-owned endpoint. It does not run OpenCode or Codex, load their login files,
+contact ChatGPT, or refresh OAuth tokens. You provide the real relay separately.
+
+## Local mock
+
+Start the mock endpoint in one terminal:
+
+```sh
+bun run mock:usage
+```
+
+Then start the screen in another:
 
 ```sh
 cargo run -p player -- --preview --playlist config/usage.toml \
   --display profiles/displays/dfrobot-fit0820-480x320.toml
 ```
 
-The default renderer uses ASCII `#` fill and `-` empty cells. Use
-`--renderer native` for plain Slint percentage bars. Glyph presets apply to
-character art in the clock; usage bars always use ordinary ASCII characters.
+The mock binds only to `127.0.0.1:8787` and serves `GET /usage`. It reads
+`config/usage-mock.json` on each request. Edit that file to change the bars on
+the next refresh. These are sample values, not actual account usage. The mock
+is development tooling, not a service required on the Pi.
 
-## Authentication
+The default playlist rotates between the clock and this endpoint-backed screen.
+`config/usage-demo.toml` remains an offline visual fixture that makes no requests.
 
-The screen makes a read-only request to
-`https://chatgpt.com/backend-api/wham/usage`, the endpoint used by Codex.
-This is an internal subscription endpoint, not a supported public API. Its
-schema or availability may change. These quotas concern Codex, not ChatGPT
-conversations or OpenAI API-key billing. OpenCode usage counts against them
-when it uses the same ChatGPT subscription account.
+## Endpoint contract
 
-On Linux it reads the existing OpenAI OAuth entry from
-`$XDG_DATA_HOME/opencode/auth.json`, defaulting to
-`~/.local/share/opencode/auth.json`. If unavailable, it tries
-`$CODEX_HOME/auth.json`, defaulting to `~/.codex/auth.json`. It supports
-OpenCode's file-based `openai` OAuth entry and Codex's `tokens` entry.
-Other credential stores, including keyring-only login, are not supported.
+Return HTTP 200 with JSON:
 
-An explicit path overrides discovery:
+```json
+{
+  "five_hour_used_percent": 37,
+  "weekly_used_percent": 62
+}
+```
+
+Values are numbers between 0 and 100 and mean **used**, not remaining.
+Missing or `null` values mean unavailable and display `--`. Extra fields are
+ignored. Invalid percentages, malformed JSON, and failed requests clear the
+old values rather than showing stale numbers as current. The relay should
+return null or an error when its upstream data is stale.
+
+## Connect your real endpoint
 
 ```toml
 [[screens]]
@@ -38,34 +53,29 @@ duration_seconds = 15
 renderer = "ansi"
 
 [screens.settings]
+endpoint = "https://your-relay.example/usage"
 refresh_seconds = 60
-auth_file = "/secure/local/auth.json"
+token_env = "PI_USAGE_RELAY_KEY"
 ```
 
-Keep authentication files outside the repository. Do not put tokens in a
-playlist. The player does not modify login files, refresh tokens, or print
-authentication data. Renew an expired login in OpenCode or Codex. The next
-refresh reads the updated file. On a Pi, sign in there or provision the
-authentication file securely for the account running the player.
+`token_env` is optional. If configured, the player reads that environment
+variable and sends `Authorization: Bearer <key>`. Provision the key outside
+the repository, such as in a private service environment file. Never put it
+in the URL or playlist. Missing keys and HTTP 401/403 show a key-check message.
+The mock needs no key. There is no login flow on the Pi.
 
-## Refresh and unavailable data
+Remote endpoints must use HTTPS. HTTP is allowed only on loopback for local
+development. Redirects and embedded URL credentials are rejected. The relay
+key and response body never appear in error diagnostics.
 
-Requests run on a background thread with a 10-second timeout, no redirects,
-and a bounded response size. Only one request per screen instance can run at
-a time. The interval is 60 seconds by default and must be 30–3600 seconds.
-Hidden screens do not start requests. Configuration validation does not read
-credentials or start requests.
+Requests run in the background with a 10-second timeout and 64 KiB response
+limit. The refresh interval must be 30–3600 seconds. Hidden screens do not
+start requests. Validation does not read keys or start network requests.
 
-Unavailable windows display `--`, not 0%. A rejected login shows a sign-in
-message. Failed refreshes clear old percentages so stale values do not look
-current. Window labels follow the reported durations rather than assuming
-primary always means 5 hours.
+The ANSI renderer uses `#` fill and `-` empty cells. `--renderer native` selects
+plain Slint bars. Clock glyph presets do not affect the usage bars.
 
-For an offline visual test, use `config/usage-demo.toml`. It deliberately uses
-sample values of 37% and 62% and never loads credentials or requests data.
-Tests use this mode, not your account.
-
-Check the actual connection without opening a window:
+With the local mock running, check the HTTP path without opening a window:
 
 ```sh
 cargo run -p screen-usage --example check-usage

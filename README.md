@@ -57,8 +57,9 @@ The clock uses the operating system's local timezone. Set `format = "12h"` or
 Configuration is read at startup; restart the player after editing it.
 
 The playlist also includes a Codex usage screen with labeled 5-hour and weekly
-percentage-used bars. It reads an existing local ChatGPT OAuth login from
-OpenCode or Codex and refreshes in the background. See
+percentage-used bars. It fetches a user-owned endpoint in the background;
+`bun run mock:usage` starts a local sample endpoint. No ChatGPT login is needed
+on the Pi. See
 [usage screen setup](docs/usage-screen.md) for authentication and offline previews.
 
 ANSI digits roll when they change, without adding another clock element.
