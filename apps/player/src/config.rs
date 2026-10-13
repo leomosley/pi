@@ -115,6 +115,15 @@ mod tests {
     }
 
     #[test]
+    fn dfrobot_touchscreen_profile_is_valid() {
+        let display: DisplayProfile = toml::from_str(include_str!(
+            "../../../profiles/displays/dfrobot-fit0820-480x320.toml"
+        ))
+        .unwrap();
+        assert!(display.validate().is_ok());
+    }
+
+    #[test]
     fn zero_duration_is_rejected() {
         let config: PlaylistConfig =
             toml::from_str("[[screens]]\nmodule='clock'\nduration_seconds=0").unwrap();

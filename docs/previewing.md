@@ -22,6 +22,18 @@ For portrait orientation swap width and height. At scale factor 2 an 800 × 480
 screen has a 400 × 240 logical UI area. The player starts its Slint backend with
 that scale override rather than inheriting your desktop's scale.
 
+The DFRobot FIT0820 3.5-inch SPI touchscreen sold by The Pi Hut has a bundled
+480 × 320 landscape profile:
+
+```sh
+cargo run -p player -- --preview \
+  --display profiles/displays/dfrobot-fit0820-480x320.toml
+```
+
+This matches the pixel layout, not its 3.5-inch physical size on your monitor.
+The panel uses resistive touch and requires hardware-specific display drivers;
+verify that its vendor setup supports your Raspberry Pi OS version before buying.
+
 The preview window is fixed-size. Its control strip adds 48 logical pixels below
 the target content, plus the desktop's normal window decorations. Choose a
 profile that fits on your monitor; automatic zoom-to-fit is not implemented.

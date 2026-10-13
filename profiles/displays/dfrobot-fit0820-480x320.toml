@@ -1,0 +1,8 @@
+# DFRobot FIT0820, sold by The Pi Hut as a Pi 4 metal case with 3.5-inch TFT.
+# https://thepihut.com/products/raspberry-pi-4-metal-case-with-3-5-tft-touchscreen-480x320
+# Landscape, SPI over GPIO, resistive touch. Hardware drivers are not simulated.
+# The listed 94 x 64 x 31 mm dimensions are the enclosure, not the active panel.
+name = "DFRobot FIT0820 3.5-inch TFT"
+width_px = 480
+height_px = 320
+scale_factor = 1.0
