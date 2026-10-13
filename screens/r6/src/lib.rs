@@ -65,7 +65,7 @@ pub struct Profile {
 }
 
 impl Profile {
-    fn display_stats(&self) -> [(&'static str, &str); 4] {
+    fn display_stats(&self) -> [(&'static str, &str); 5] {
         let value = |label| {
             self.stats
                 .iter()
@@ -79,6 +79,7 @@ impl Profile {
             .map_or("--", |part| part.trim_end_matches(" RP"));
         [
             ("RP", rp),
+            ("Season peak", value("Season Peak")),
             ("K/D", value("K/D")),
             ("Win rate", value("Win Rate")),
             ("Headshot", value("Headshot %")),
@@ -283,11 +284,14 @@ impl R6Screen {
             }
             let x = 2 + profile.art[0].len() + 3;
             let width = columns.saturating_sub(x + 2);
-            let mut y = rows.saturating_sub(20) / 2;
+            let mut y = rows.saturating_sub(26) / 2;
+            let header = format!("{} @ {}", self.settings.username, self.settings.platform);
+            text_at(&mut output, &header, x, y, width, false);
+            y += 3;
             for (label, value) in profile.display_stats() {
                 text_at(&mut output, label, x, y, width, true);
                 text_at(&mut output, value, x, y + 1, width, false);
-                y += 5;
+                y += 4;
             }
         }
         if !self.message.is_empty() {
@@ -505,12 +509,13 @@ mod tests {
     }
 
     #[test]
-    fn displays_only_the_four_requested_stats() {
+    fn displays_requested_stats_and_season_peak() {
         let profile = parse_profile(FIXTURE).unwrap();
         assert_eq!(
             profile.display_stats(),
             [
                 ("RP", "4,090"),
+                ("Season peak", "Diamond II / 4,317 RP"),
                 ("K/D", "0.82"),
                 ("Win rate", "47%"),
                 ("Headshot", "60.2%")
@@ -526,9 +531,8 @@ mod tests {
         .unwrap();
         let frame = screen.ansi_frame(60, 40);
         for removed in [
-            "Diamond",
+            "Diamond V",
             "Level",
-            "Season Peak",
             "All-Time Peak",
             "Kills",
             "Deaths",
@@ -541,7 +545,23 @@ mod tests {
     fn missing_headshot_is_unknown_not_zero() {
         let mut profile = parse_profile(FIXTURE).unwrap();
         profile.stats.retain(|(label, _)| *label != "Headshot %");
-        assert_eq!(profile.display_stats()[3], ("Headshot", "--"));
+        assert_eq!(profile.display_stats()[4], ("Headshot", "--"));
+    }
+    #[test]
+    fn player_header_is_above_rp_in_stats_column() {
+        let screen = R6Screen::new(R6Settings {
+            demo: true,
+            ..Default::default()
+        })
+        .unwrap();
+        let mut terminal = Terminal::new(60, 40).unwrap();
+        terminal.feed(screen.ansi_frame(60, 40).as_bytes());
+        let row = |y| {
+            (29..58)
+                .map(|x| terminal.cell(x, y).unwrap().character)
+                .collect::<String>()
+        };
+        assert!(row(7).starts_with("mosly @ pc") && row(10).starts_with("RP"));
     }
     #[test]
     fn unranked_without_rp_is_unknown_not_fake_value() {

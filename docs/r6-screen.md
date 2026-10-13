@@ -5,8 +5,9 @@ It preserves the public ANSI rank emblem's Braille characters and RGB colours,
 then lays out the stats beside it for the 480 × 320 display.
 When space permits, emblem rows are doubled to match the taller terminal-cell
 aspect ratio on the renderer's square 8 × 8 cells. Beside the emblem it shows
-only current RP, K/D, win rate, and headshot percentage. Rank names, peaks,
-level, and match totals are omitted. Missing RP or headshot data displays `--`.
+the player name and platform above current RP, followed by season peak rank/RP,
+K/D, win rate, and headshot percentage. Current rank name, all-time peak, level,
+and match totals are omitted. Missing RP or headshot data displays `--`.
 
 ```sh
 cargo run -p player -- --preview --playlist config/r6.toml \
